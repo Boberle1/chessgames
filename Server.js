@@ -4,7 +4,7 @@ const app = express();
 const server = require('http').Server(app);
 const io = require('socket.io')(server, {
     cors: {
-        origin:['https://chessgames.herokuapp.com'],
+        origin:['http://chessgames.herokuapp.com'],
     }
 })
 var public = path.join(__dirname, 'public');

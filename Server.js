@@ -1,10 +1,10 @@
 const express = require('express');
 const path = require('path');
 const app = express();
-const server = require('http').Server(app);
+const server = require('https').Server(app);
 const io = require('socket.io')(server, {
     cors: {
-        origin:['http://chessgames.herokuapp.com'],
+        origin:['https://chessgames.herokuapp.com'],
     }
 })
 var public = path.join(__dirname, 'public');
@@ -35,18 +35,19 @@ io.on('connection', (socket) =>{
     socket.on('join', (room) =>{
         numclients++;
         socket.join(room);
-        console.log(room + ' joined the room!!!!!');
-        let pov = numclients === 1 ? 'white' : 'black';
-        io.to(socket.id).emit('pov', pov);
+        socket.emit('enterroom' (socket.id + "has entered room!"));
     })
+
     socket.on('movemade', (thing) =>{
         socket.in('board').emit('movesent', thing);
         console.log(thing);
     });
 
+
     socket.on('disconnect', () =>{
         numclients--;
-        console.log(socket.id + " Client disconnected!");
+        let message = socket.id + "left room!";
+        socket.in('board').emit('leaveroom', message);
     })
 })
 

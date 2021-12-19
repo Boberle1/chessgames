@@ -1,6 +1,6 @@
 
 import {io} from 'socket.io-client';
-const socket = io('http://chessgames.herokuapp.com');
+const socket = io('https://chessgames.herokuapp.com');
 let whitespots = document.querySelectorAll("white");
 let blackspots = document.querySelectorAll("black");
 let queen = document.getElementById("lq");
@@ -18,15 +18,15 @@ let item = 1;
 const room = 'board';
 socket.on('connect', (first) =>{
     socket.emit('join', (room));
-    console.log("connection made on clientside!");
+    alert("You connected to room board");
 });
 
-socket.on('pov', (team) => {
-    if(team === 'black')
-    {
-        
-    }
-    return;
+socket.on('leaveroom', (message) => {
+    alert(message);
+});
+
+socket.on('enterroom', (message) => {
+    alert("Player " + message);
 });
 /*
 class Move{

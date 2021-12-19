@@ -5,10 +5,6 @@ header>h1{
     padding-bottom: 20px;
 }
 
-body{
-    text-align: center;
-}
-
 .Chess-Board {
     position:absolute;
     margin-top: 20px;

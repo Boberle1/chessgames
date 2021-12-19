@@ -9,7 +9,7 @@ const io = require('socket.io')(server, {
 })
 var public = path.join(__dirname, 'public');
 
-const port = process.env.PORT || 6060;
+const port = process.env.PORT || 8080;
 
 app.use('/', express.static('public'))
 
@@ -35,14 +35,13 @@ io.on('connection', (socket) =>{
     socket.on('join', (room) =>{
         numclients++;
         socket.join(room);
-        socket.emit('enterroom' (socket.id + "has entered room!"));
+        socket.in('board').emit('enterroom', (socket.id + "has entered room!"));
     })
 
     socket.on('movemade', (thing) =>{
         socket.in('board').emit('movesent', thing);
         console.log(thing);
     });
-
 
     socket.on('disconnect', () =>{
         numclients--;

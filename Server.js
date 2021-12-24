@@ -79,7 +79,7 @@ class roominfo{
 
     AddPlayer(pname, sock_id)
     {
-        if(roomsize === 2)
+        if(this.roomsize === 2)
         {
             console.log('socket cannot connect, room is full!!!');
             return false;

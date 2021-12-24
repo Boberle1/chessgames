@@ -4,7 +4,7 @@ const app = express();
 const server = require('http').Server(app);
 const io = require('socket.io')(server, {
     cors: {
-       origin:['http://chessgames.herokuapp.com'],
+       origin:['localhost:8080'],
     }
 })
 var public = path.join(__dirname, 'public');
@@ -84,9 +84,20 @@ class roominfo{
             console.log('socket cannot connect, room is full!!!');
             return false;
         }
-        this.roomsize++;
-        this.player2.New(pname, sock_id, 'black');
-        return true;
+        if(!this.player1.active)
+        {
+            this.roomsize++;
+            this.player1.New(pname, sock_id, 'white');
+            return true;
+        }
+        if(!this.player2.active)
+        {
+            this.roomsize++;
+            this.player2.New(pname, sock_id, 'black');
+            return true;
+        }
+        console.log('room is full but player is inactive!');
+        return false;
     }
 
     RemovePlayer(sock_id)
@@ -114,6 +125,16 @@ class roominfo{
             room: 'null',
             name: null
         }
+    }
+
+    RoomEmpty()
+    {
+        if(!this.player1.active && !this.player2.active)
+        {
+            return true;
+        }
+
+        return false;
     }
 }
 
@@ -147,6 +168,10 @@ function DeletePlayer(sock_id)
         if(roomholder[i].HasPlayer(sock_id))
         {
             let obj = roomholder[i].RemovePlayer(sock_id);
+            if(roomholder[i].RoomEmpty())
+            {
+                roomholder.splice(i, 1);
+            }
             return obj;
         }
     };
@@ -162,11 +187,12 @@ io.on('connection', (socket) =>{
     {
         numclients == -1;
     }
+
     console.log(socket.id);
     socket.on('join', (player) =>{
         if(roomholder.length === 0)
         {
-            roomholder.push(new roominfo(player.room, player.PlayerName, socket.id, 'black'));
+            roomholder.push(new roominfo(player.room, player.PlayerName, socket.id, 'white'));
         }
         else
         {
@@ -174,7 +200,7 @@ io.on('connection', (socket) =>{
             {
                 if(roomholder[index].room === player.room)
                 {
-                    if(!roomholder[index].AddPlayer(player.PlayerName, socket.id, 'white'))
+                    if(!roomholder[index].AddPlayer(player.PlayerName, socket.id, 'black'))
                     {
                         console.log("socket cannot connect, room is full!!!");
                         return;
@@ -200,7 +226,6 @@ io.on('connection', (socket) =>{
         socket.in(room).emit('monitor-drag-in', (obj));
     });
 
-    
     socket.on('drag-leave', (obj) => {
         let room = FindRoom(socket.id);
         socket.in(room).emit('monitor-drag-leave', (obj));

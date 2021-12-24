@@ -1,6 +1,6 @@
 
 import {io} from 'socket.io-client';
-const socket = io('http://chessgames.herokuapp.com');
+const socket = io('localhost:8080');
 let whitespots = document.querySelectorAll("white");
 let blackspots = document.querySelectorAll("black");
 let queen = document.getElementById("lq");

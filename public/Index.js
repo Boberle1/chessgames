@@ -43,6 +43,7 @@ function RemoveFromBoard(elem)
         }
     }
 }
+
 let toppawn = document.getElementById('21');
 let bottompawn = document.getElementById('71');
 
@@ -827,8 +828,19 @@ let pawn = new Pawn();
                 }*/
                 if(focusenter.id === chesspiecehome.id)
                 {
-                    console.log("focusenter.id: " + focusenter.id);
-                    console.log("chesspiecehome.id: " + chesspiecehome.id);
+                    if(chesspiece.children.item(0).id === 'dk' || chesspiece.children.item(0).id === 'lk')
+                    king.ClearMoves();
+                    if(chesspiece.children.item(0).id === 'dq' || chesspiece.children.item(0).id === 'lq')
+                    queen.ClearMoves();
+                    if(chesspiece.children.item(0).className === 'lightrook' || chesspiece.children.item(0).className === 'darkrook')
+                    rook.ClearMoves();
+                    if(chesspiece.children.item(0).className === 'lightbishop' || chesspiece.children.item(0).className === 'darkbishop')
+                    bishop.ClearMoves();
+                    if(chesspiece.children.item(0).className === 'lightknight' || chesspiece.children.item(0).className === 'darkknight')
+                    knight.ClearMoves();
+                    if(chesspiece.children.item(0).className === 'lightpawn' || chesspiece.children.item(0).className === 'darkpawn')
+                    pawn.ClearMoves();
+
                     return;
                 }
                 if(!chesspiecehome.children.item(0))

@@ -128,7 +128,7 @@ header>h1{
 
 .black-drag-over{
     width: 98px;
-    height: 988px;
+    height: 98px;
     background-color: #817E7D;
     border: 2px black solid;
 }
@@ -146,7 +146,5 @@ header>h1{
 }
 
 .moves{
-    width: 94px;
-    height: 94px;
-    border: 4px red solid;
+    background-color:green;
 }

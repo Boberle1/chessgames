@@ -1,10 +1,12 @@
+const deploy = 'http://chessgames.herokuapp.com';
+const local = 'localhost:8080';
 const express = require('express');
 const path = require('path');
 const app = express();
 const server = require('http').Server(app);
 const io = require('socket.io')(server, {
     cors: {
-       origin:['http://chessgames.herokuapp.com'],
+       origin:[local],
     }
 })
 var public = path.join(__dirname, 'public');
@@ -15,18 +17,8 @@ app.use('/', express.static('public'))
 
 let Path = '/whiteteam.html';
 let numclients = 0;
-app.get('/', (req, res) =>{
-    if(numclients === 0)
-    {
-         res.sendFile(path.join(public, '/whiteteam.html'));
-    }
-    if(numclients === 1)
-    {
-        res.sendFile(path.join(public, '/blackteam.html'))
-    }
-   console.log("Sent html file!");
-});
-
+let team1 = 'white';
+let team2 = 'black';
 class playerinfo{
     playername = '';
     socketid = '';
@@ -140,6 +132,44 @@ class roominfo{
 
 let roomholder = [];
 let room = '';
+
+app.get('/', (req, res) =>{
+    if(roomholder.length)
+    {
+        let team = '';
+        if(roomholder[0].player1.active){
+            
+            if(roomholder[0].player1.team === team1)
+            {
+                team = team2;
+            }
+            else
+            team = team1;
+            res.sendFile(path.join(public, '/' + team + 'team.html'));
+            return;
+        }
+        if(roomholder[0].player2.active){
+            if(roomholder[0].player2.team === team1)
+            {
+                team = team2;
+            }
+            else
+            team = team1;
+            res.sendFile(path.join(public, '/' + team + 'team.html'));
+            return;
+        }
+        res.sendFile(path.join(public, '/whiteteam.html'));
+    }
+    if(numclients === 0)
+    {
+         res.sendFile(path.join(public, '/whiteteam.html'));
+    }
+    if(numclients === 1)
+    {
+        res.sendFile(path.join(public, '/blackteam.html'))
+    }
+   console.log("Sent html file!");
+});
 
 function FindRoom(sock_id){
     for(let i = 0; i < roomholder.length; ++i){

@@ -6,7 +6,7 @@ const app = express();
 const server = require('http').Server(app);
 const io = require('socket.io')(server, {
     cors: {
-       origin:[deploy],
+       origin:[local],
     }
 })
 var public = path.join(__dirname, 'public');
@@ -256,9 +256,23 @@ io.on('connection', (socket) =>{
         socket.in(room).emit('monitor-drag-in', (obj));
     });
 
+    /*
+    socket.on('move finished', (obj) =>{
+        let room = FindRoom(socket.id);
+        socket.in(room).emit('checkforcheck', (obj));
+    });
+    */
+
     socket.on('drag-leave', (obj) => {
         let room = FindRoom(socket.id);
         socket.in(room).emit('monitor-drag-leave', (obj));
+    });
+
+    socket.on('invalid-move', (obj) => {
+        console.log('entered invalid move!');
+        console.log('cid ' + obj.cp + ' sid ' + obj.sp);
+        let room = FindRoom(socket.id);
+        socket.in(room).emit('move-back', (obj));
     });
 
     socket.on('disconnect', () =>{

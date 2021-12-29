@@ -12,15 +12,15 @@ header>h1{
     left: 50%;
     -webkit-transform: translate(-50%, -50%);
     transform: translate(-50%, -50%); 
-    width: 816px;
-    height: 816px;
-    border: 10px solid #461707;
+    width: 720px;
+    height: 720px;
+    border: 8px solid #461707;
 }
 
 .black{
     position: relative;
-    width: 100px;
-    height: 100px;
+    width: 88px;
+    height: 88px;
     background-color: #3E3E41;
     border: 1px black solid;
     float:left;
@@ -31,8 +31,8 @@ header>h1{
 
 .white{
     position: relative;
-    width:100px;
-    height: 100px;
+    width:88px;
+    height: 88px;
     background-color: #E1E0F9;
     border: 1px black solid;
     float:left;
@@ -106,46 +106,45 @@ header>h1{
 }
 
 .white:hover{
-    width: 98px;
-    height: 98px;
+    width: 86px;
+    height: 86px;
     background-color: #DBCCC6;
     border: 2px black solid;
 }
 
 .black:hover{
-    width: 98px;
-    height: 98px;
+    width: 86px;
+    height: 86px;
     background-color: #817E7D;
     border: 2px black solid;
 }
 
 .white-drag-over{
-    width: 98px;
-    height: 98px;
+    width: 86px;
+    height: 86px;
     background-color: #DBCCC6;
     border: 2px black solid;
 }
 
 .black-drag-over{
-    width: 98px;
-    height: 98px;
+    width: 86px;
+    height: 86px;
     background-color: #817E7D;
     border: 2px black solid;
 }
 
 .drag-over{
-    width: 98px;
-    height: 98px;
+    width: 86px;
+    height: 86px;
     border: 2px red solid;
 }
 
 .land{
-    width: 100px;
-    height: 100px;
+    width: 88px;
+    height: 88px;
     border: 1px black solid;
 }
 
 .moves{
     background-color: #65b886;
 } 
-

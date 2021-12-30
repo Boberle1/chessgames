@@ -2,7 +2,7 @@
 import {io} from 'socket.io-client';
 const deploy = 'http://chessgames.herokuapp.com';
 const local = 'localhost:8080';
-const socket = io(local);
+const socket = io(deploy);
 let Square = document.getElementById("11");
 let home = document.getElementById("11");
 let lastspot = home;
@@ -53,15 +53,6 @@ for(let i = 1; i < 9; ++i)
         blackonboard.push(document.getElementById('db' + i.toString()).parentElement);
         whiteonboard.push(document.getElementById('lb' + i.toString()).parentElement);
     }
-}
-
-
-for(let i = 0; i < whiteonboard.length; ++i)
-{
-    whiteonboard[i].children.item(0).style.height = Square.style.height - 6;
-    console.log(whiteonboard);
-    blackonboard[i].children.item(0).style.height = Square.style.height - 6;
-    console.log(blackonboard);
 }
 
 console.log(blackonboard);

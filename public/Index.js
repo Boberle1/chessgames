@@ -1651,7 +1651,7 @@ function GetApposingMoves(team)
                             chesspiece.children.item(0).classList.replace(team + 'pawn', team + 'queen');
                             chesspiece.children.item(0).id = 'lq';
                             let image = document.createElement('img');
-                            image.src = 'Chess_Pieces/' + team + 'queen.png'
+                            image.src = 'Chess_Pieces/sm' + team + 'queen.png'
                             image.ariaLabel = team;
                             chesspiece.children.item(0).appendChild(image);
                         }

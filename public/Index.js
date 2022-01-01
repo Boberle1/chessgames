@@ -2,7 +2,8 @@
 import {io} from 'socket.io-client';
 const deploy = 'http://chessgames.herokuapp.com';
 const local = 'localhost:8080';
-const socket = io(deploy);
+const socket = io(local);
+let board = document.getElementById('cb');
 let Square = document.getElementById("11");
 let home = document.getElementById("11");
 let lastspot = home;
@@ -17,7 +18,60 @@ let blackonboard = [];
 let whiteonboard = [];
 let blackteam = [];
 let whiteteam = [];
+let boardsquares = [];
 
+function switchpiece(elem, h)
+{
+    let stringname = '';
+    if(h < 62)
+    {
+        stringname = 'sms'
+    }
+    else if(h < 85)
+    {
+        stringname = 'smr';
+    }
+    else if(h < 152)
+    {
+        stringname = 'sm';
+    }
+
+    let child = elem.children.item(0).children.item(0).children.item(0);
+    let path = child.src;
+    let start = path.indexOf('light')
+    if(start === -1)
+    start = path.indexOf('dark');
+    path = 'Chess_pieces/' + stringname + path.substr(start, path.length);
+    elem.children.item(0).children.item(0).removeChild(child);
+    let image = document.createElement('img');
+    image.src = path
+    console.log("path: " + path);
+    image.ariaLabel = child.ariaLabel;
+    elem.children.item(0).children.item(0).appendChild(image);
+}
+
+window.addEventListener('resize', (e) => {
+    console.log("Entered window addevent listener :::::::::::::::::::::::::::::::::::::::");
+    let h = (.75 * window.innerHeight) / 8;
+    h = parseInt(h.toString().substr(0, 2));
+    console.log("h: " + h);
+    let w = h;
+    let total = h * 8;
+    h -= 2;
+    console.log("total: " + total);
+    board.style.width = total.toString() + 'px';
+    board.style.height = total.toString() + 'px';
+    for(let i = 0; i < boardsquares.length; ++i){
+        boardsquares[i].style.height = h.toString() + 'px';
+        boardsquares[i].style.width = h.toString() + 'px';
+        console.log("boardsquares[i].height" + boardsquares[i].offsetHeight);
+        if(boardsquares[i].children.length)
+        {
+            switchpiece(boardsquares[i], h - 2);
+        }
+    };
+    console.log("Exited window addevent listener :::::::::::::::::::::::::::::::::::::::");
+});
 
 function GetApposingTeamMoves(team)
 {
@@ -1414,15 +1468,39 @@ function GetApposingMoves(team)
         return;
     }
 }
-    let item2 = item;
-    let itemend = 8;
 
+let item2 = item;
+let itemend = 8;
+
+let h = (board.offsetHeight - 16) / 8;
+h = parseInt(h.toString().substr(0, 2))
+console.log("h: " + h);
+let w = h;
+let total = h * 8;
+console.log("total: " + total);
+board.style.width = total.toString() + 'px';
+board.style.height = total.toString() + 'px';
+h = h - 2;
+w = w - 2;
     while(true)
     {
         let elem = document.getElementById(item.toString() + item2.toString());
+        if(elem)
+        {
+            boardsquares.push(elem);
+        }
+        console.log("before height: " + elem.offsetHeight);
+        console.log("before width: " + elem.offsetWidth);
+        elem.style.height = h.toString().substr(0, 2) + 'px';
+        elem.style.width = w.toString().substr(0, 2)+ 'px';
+        console.log("board height: " + board.offsetHeight);
+        console.log("board width: " + board.offsetWidth);
+        console.log("height: " + elem.offsetHeight);
+        console.log("width: " + elem.offsetWidth);
         let child = elem.firstElementChild;
         if(child !== null)
         {
+            switchpiece(elem, h);
             child.addEventListener('dragstart', (e) => {
                 chesspiecehome = child.parentElement;
                 chesspiece = child;
@@ -1651,7 +1729,7 @@ function GetApposingMoves(team)
                             chesspiece.children.item(0).classList.replace(team + 'pawn', team + 'queen');
                             chesspiece.children.item(0).id = 'lq';
                             let image = document.createElement('img');
-                            image.src = 'Chess_Pieces/sm' + team + 'queen.png'
+                            image.src = 'Chess_Pieces/sm' + team + 'queen.png';
                             image.ariaLabel = team;
                             chesspiece.children.item(0).appendChild(image);
                         }

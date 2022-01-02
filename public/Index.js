@@ -1503,7 +1503,7 @@ w = w - 2;
         let child = elem.firstElementChild;
         if(child !== null)
         {
-//            switchpiece(elem, h);
+            switchpiece(elem, h);
             child.addEventListener('dragstart', (e) => {
                 chesspiecehome = child.parentElement;
                 chesspiece = child;

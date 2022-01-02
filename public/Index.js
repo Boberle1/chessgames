@@ -35,6 +35,9 @@ function switchpiece(elem, h)
     {
         stringname = 'sm';
     }
+    else{
+        stringname = '';
+    }
 
     let child = elem.children.item(0).children.item(0).children.item(0);
     let path = child.src;
@@ -1500,7 +1503,7 @@ w = w - 2;
         let child = elem.firstElementChild;
         if(child !== null)
         {
-            switchpiece(elem, h);
+//            switchpiece(elem, h);
             child.addEventListener('dragstart', (e) => {
                 chesspiecehome = child.parentElement;
                 chesspiece = child;

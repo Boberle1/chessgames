@@ -44,7 +44,7 @@ function switchpiece(elem, h)
     let start = path.indexOf('light')
     if(start === -1)
     start = path.indexOf('dark');
-    path = 'Chess_pieces/' + stringname + path.substr(start, path.length);
+    path = 'Chess_Pieces/' + stringname + path.substr(start, path.length);
     elem.children.item(0).children.item(0).removeChild(child);
     let image = document.createElement('img');
     image.src = path
@@ -1728,6 +1728,7 @@ w = w - 2;
                         if(focusenter.id.toString().slice(0,1) === '8' || focusenter.id.toString().slice(0,1) === '1')
                         {
                             let team = chesspiece.children.item(0).ariaLabel
+                            chesspiece.children.item(0).children.item(0).src;
                             chesspiece.children.item(0).removeChild(chesspiece.children.item(0).children.item(0));
                             chesspiece.children.item(0).classList.replace(team + 'pawn', team + 'queen');
                             chesspiece.children.item(0).id = 'lq';

@@ -159,8 +159,15 @@ function RemoveFromBoard(elem)
     }
 }
 
-let toppawn = document.getElementById('21');
-let bottompawn = document.getElementById('71');
+let top = '21';
+let bottom = '71';
+let blackbottom = false;
+if(board.children.item(board.children.length - 1).children.item(board.children.item(board.children.length - 1).children.length - 1).id == '11')
+{
+    blackbottom = true;
+}
+let toppawn = document.getElementById(top);
+let bottompawn = document.getElementById(bottom);
 
 class PawnStart {
     constructor(r, s, t)
@@ -176,8 +183,8 @@ class PawnStart {
 
 
 
-let Toppawn = new PawnStart('2', 'top', toppawn.children.item(0).children.item(0).ariaLabel);
-let Bottompawn = new PawnStart('7', 'bottom', bottompawn.children.item(0).children.item(0).ariaLabel);
+let Toppawn = new PawnStart(top.substr(0, 1), 'top', toppawn.children.item(0).children.item(0).ariaLabel);
+let Bottompawn = new PawnStart(bottom.substr(0, 1), 'bottom', bottompawn.children.item(0).children.item(0).ariaLabel);
 
 console.log(Toppawn);
 console.log(Bottompawn);
@@ -191,6 +198,7 @@ class playerinfo
 
     PlayerName = '';
     room = '';
+    team = '';
 }
 
 let Player = new playerinfo(prompt("Please enter your name.", ''), prompt("Please enter the room you would like to join.", ''));
@@ -1311,6 +1319,24 @@ let bishop = new Bishop();
 let knight = new Knight();
 let pawn = new Pawn();
 
+function GetPiece(id)
+{
+    if(id == 'darkking' || id == 'lightking')
+        return king;
+    if(id == 'darkqueen' || id == 'lightqueen')
+        return queen;
+    if(id == 'darkrook' || id == 'lightrook')
+        return rook;
+    if(id == 'darkbishop' || id == 'lightbishop')
+        return bishop;
+    if(id == 'darkknight' || id == 'lightknight')
+        return knight;
+    if(id == 'darkpawn' || id == 'lightpawn')
+        return pawn;
+
+    console.log('id did not match anything in GetPiece! id is: ' + id);
+    return null;
+}
 function GetPieceMoves(elem)
 {
     if(elem.children.item(0).className === 'lightking' || elem.children.item(0).className === 'darkking')
@@ -1451,6 +1477,7 @@ function GetApposingMoves(team)
 {
     whitemoves = [];
     blackmoves = [];
+    console.log('team: [[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[ ' + team);
     if(team === 'dark')
     {
         for(let i = 0; i < whiteonboard.length; ++i)
@@ -1509,44 +1536,33 @@ w = w - 2;
                 chesspiece = child;
                 if(child.children.item(0).id === 'lk' || child.children.item(0).id === 'dk')
                 {
-                    console.log('king child::');
-                    console.log(child);
                     GetApposingMoves(child.children.item(0).ariaLabel);
                     king.GetMoves(chesspiecehome.id, child.children.item(0).ariaLabel, true);
                     return;
                 }
                 if(child.children.item(0).id === 'lq' || child.children.item(0).id === 'dq')
                 {
-                    console.log('chesspiecehome.id: ' + chesspiecehome.id + ' chesspiece.id: ' + chesspiece.children.item(0).id);
-                    console.log("Entered if(child.children.item(0).id === 'lq' || child.children.item(0).id === 'dq')")
                     queen.GetMoves(chesspiecehome.id, child.children.item(0).ariaLabel, true);
                     return;
                 }
                 if(child.children.item(0).className === 'lightrook' || child.children.item(0).className == 'darkrook')
                 {
-                    console.log('chesspiecehome.id: ' + chesspiecehome.id + ' chesspiece.id: ' + chesspiece.children.item(0).id);
                     rook.GetMoves(chesspiecehome.id, child.children.item(0).ariaLabel, true);
                     return;
                 }
                 if(child.children.item(0).className === 'lightbishop' || child.children.item(0).className == 'darkbishop')
                 {
-                    console.log('chesspiecehome.id: ' + chesspiecehome.id + ' chesspiece.id: ' + chesspiece.children.item(0).id);
                     bishop.GetMoves(chesspiecehome.id, child.children.item(0).ariaLabel, true);
                     return;
                 }
                 if(child.children.item(0).className === 'lightknight' || child.children.item(0).className == 'darkknight')
                 {
-                    console.log('chesspiecehome.id: ' + chesspiecehome.id + ' chesspiece.id: ' + chesspiece.children.item(0).id);
                     knight.GetMoves(chesspiecehome.id, child.children.item(0).ariaLabel, true);
                     return;
                 }
-                console.log('right before pawn dragstart@@@@@@@@@@@@@@@@@@');
                 if(child.children.item(0).className === 'lightpawn' || child.children.item(0).className == 'darkpawn')
                 {
-
-                    console.log('chesspiecehome.id: ' + chesspiecehome.id + ' chesspiece.id: ' + chesspiece.children.item(0).id);
                     pawn.GetMoves(chesspiecehome.id, child.children.item(0).ariaLabel, true);
-                    console.log('left pawn dragstart@@@@@@@@@@@@@@@@@@');
                     return;
                 }
             });
@@ -1562,9 +1578,16 @@ w = w - 2;
             if(focusenter.className  === 'black moves' || focusenter.className === 'white moves' || focusenter.className === 'white' || focusenter.className === 'black' 
             || focusenter.className === 'black drag-over' || focusenter.className === 'white drag-over')
             {
-                console.log('focusenter.id: ' + focusenter.id + ' chesspiecehome.id: ' + chesspiecehome.id + ' e.currentTarget: ' + e.currentTarget.id + 'e.target.id: ' + e.target.id +'this.id: ' + this.id)
                 if(focusenter.id === chesspiecehome.id)
                 {
+                    let cp = GetPiece(chesspiece.children.item(0).className);
+                    if(!cp)
+                    {
+                        console.log('cp is null in dragend!');
+                        return;
+                    }
+                    cp.ClearMoves();
+                    /*
                     if(chesspiece.children.item(0).id === 'dk' || chesspiece.children.item(0).id === 'lk')
                     king.ClearMoves();
                     if(chesspiece.children.item(0).id === 'dq' || chesspiece.children.item(0).id === 'lq')
@@ -1577,17 +1600,56 @@ w = w - 2;
                     knight.ClearMoves();
                     if(chesspiece.children.item(0).className === 'lightpawn' || chesspiece.children.item(0).className === 'darkpawn')
                     pawn.ClearMoves();
+                    */
 
                     return;
                 }
                 if(!chesspiecehome.children.item(0))
                 {
-                    console.log("chesspiecehome has no children to remove!");
-                    console.log("chesspiecehome.id is: " + chesspiecehome.id);
-                    console.log('chesspiece.id is: ' + chesspiece.id);
+                    console.log('chesspiecehome does not have a chess piece in dragend!!!');
                     return;
                 }
-
+                let cp = GetPiece(chesspiece.children.item(0).className);
+                if(!cp)
+                {
+                    console.log('cp in dragend in null!!!!');
+                    return;
+                }
+                if(cp.IsValidMove(focusenter.id))
+                {
+                    if(focusenter.children.length)
+                    {
+                        socket.emit('take-piece', (focusenter.children.item(0).children.item(0).id));
+                        RemoveFromBoard(focusenter.children.item(0));
+                        focusenter.removeChild(focusenter.children.item(0));
+                        socket.emit('move finished', Player);
+                    }
+                    chesspiecehome.removeChild(chesspiece);
+                        
+                    if((focusenter.id.toString().slice(0,1) === '8' || focusenter.id.toString().slice(0,1) === '1') && (chesspiece.children.item(0).className == 'lightpawn' ||
+                    chesspiece.children.item(0).className == 'darkpawn'))
+                    {
+                        let team = chesspiece.children.item(0).ariaLabel
+                        chesspiece.children.item(0).children.item(0).src;
+                        chesspiece.children.item(0).removeChild(chesspiece.children.item(0).children.item(0));
+                        chesspiece.children.item(0).classList.replace(team + 'pawn', team + 'queen');
+                        chesspiece.children.item(0).id = 'lq';
+                        let image = document.createElement('img');
+                        image.src = 'Chess_Pieces/sm' + team + 'queen.png';
+                        image.ariaLabel = team;
+                        chesspiece.children.item(0).appendChild(image);
+                    }   
+                    focusenter.appendChild(chesspiece);
+                    cp.ClearMoves();
+                    socket.emit('move finished', Player);
+                    return;
+                }
+                else{
+                    cp.ClearMoves();
+                    socket.emit('invalid-move', ({cp: chesspiece.children.item(0).id, sp: chesspiece.parentElement.id}));
+                    alert("Invalid move!");
+                    return;
+                }
                 if(chesspiece.children.item(0).id === 'dk' || chesspiece.children.item(0).id === 'lk')
                 {
                     if(king.IsValidMove(focusenter.id))
@@ -1861,34 +1923,37 @@ socket.on('move-back', (obj) => {
     let parent = cp.parentElement.parentElement;
     console.log(obj);
     home.appendChild(cpparent);
- //   parent.removeChild(cpparent);
 });
 
-/*
+
 socket.on('checkforcheck', (obj) => {
     let cp = null;
-    let piecmoves = [];
-    team = bottompawn.children.item(0).id;
-    if(team === 'lt')
+    let piecemoves = [];
+    let team = !blackbottom ? 'lt' : '';
+    console.log('bottompawn.children.item(0).id: ' + team);
+    if(team == 'lt')
     {
         cp = document.getElementById('lk');
+        GetApposingMoves('light');
+        piecemoves = blackmoves;
     }
     else{
         cp = document.getElementById('dk');
+        GetApposingMoves('dark');
+        piecemoves = whitemoves;
     }
 
-    GetApposingMoves('dark');
-    if(team === 'dt')
+    console.log('piecemoves.length');
+    console.log(piecemoves);
+    for(let i = 0; i < piecemoves.length; ++i)
     {
-        for(let i = 0; i < blackmoves.length; ++i)
+        console.log('piecemoves[i]: ' + piecemoves[i] + ' cp.parentElement.id: ' + cp.parentElement.parentElement.id);
+        if(piecemoves[i] == cp.parentElement.parentElement.id)
         {
-            if(blackmoves[i] === cp.parentElement.id)
-            {
-                alert(obj.PlayerName + " put you in check!");
-            }
+            alert(obj.PlayerName + " put you in check!");
         }
-    }
+    } 
 });
-*/
+
 
 

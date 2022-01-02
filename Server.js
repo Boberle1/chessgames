@@ -256,12 +256,12 @@ io.on('connection', (socket) =>{
         socket.in(room).emit('monitor-drag-in', (obj));
     });
 
-    /*
+    
     socket.on('move finished', (obj) =>{
         let room = FindRoom(socket.id);
         socket.in(room).emit('checkforcheck', (obj));
     });
-    */
+    
 
     socket.on('drag-leave', (obj) => {
         let room = FindRoom(socket.id);

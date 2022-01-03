@@ -226,7 +226,9 @@ class Moves{
     {
         for(let i = 0; i < this.moves.length; ++i)
         {
-            if(this.moves[i] === id)
+            console.log('id: ' + id);
+            console.log(this.moves);
+            if(this.moves[i] == id)
             {
                 return true;
             }
@@ -271,11 +273,8 @@ class diagnalmove extends Moves{
 
         row = parseInt(spot.toString().slice(0,1));
         col = parseInt(spot.toString().slice(1,2));
-        console.log("Entered getDiamoves IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIi spot is: " + row + col);
-        console.log("this: " + this);
         for(let iteration = 1; iteration < 5; ++iteration)
         {
-            console.log("Entered for loop in getDiagmove!!!! iteration is: " + iteration);
             this.onemove = false;
             this.DiaMoves(this.Rowincrement(row, iteration), this.Colincrememt(col, iteration), team, kingmove, moves_available, theoretical, iteration);
         }
@@ -283,24 +282,18 @@ class diagnalmove extends Moves{
 
     DiaMoves(row, col, team, kingmove, moves_available, theoretical, iteration)
     {
-        console.log("Entered Moves Diag iteration is: " + iteration + " ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
-        console.log("Spot = " + row + col);
         if(!this.Check(row, col, iteration))
         {
-            console.log("this.check(row, col, iteration) return false! Leaving Moves~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
             return;
         }
         let next =  document.getElementById(row.toString() + col.toString());
         if(next === null)
         {
-            console.log("Next is null in diagnalRU!");
+            console.log("Next is null in DaMoves!");
             return;
         }
         if(next.children.length)
         {
-            console.log("next.children.lenth is: true!"); 
-            console.log(next);
-            console.log("next.children.item(0).children.item(0).ariaLabel: " + next.children.item(0).children.item(0).ariaLabel + " team: " + team);
             if(next.children.item(0).children.item(0).ariaLabel === team)
             {
                 if(theoretical && !this.onemove)
@@ -309,25 +302,20 @@ class diagnalmove extends Moves{
                     if(moves_available)
                     {
                         next.classList.add('moves');
-                        console.log("next.classlist.add('moves')");
                     }
                     this.moves.push(next.id);
-                    console.log("Leaving Moves through if(theoretical && !this.onemove)~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
                     return;
                 }
-                console.log("Leaving Moves throug if(next.children.item(0).children.item(0).ariaLabel === team)~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
                 return;
             }
             if(kingmove)
             {
                 console.log("KingMove is true");
                 let opposition = GetApposingTeamMoves(team);
-                console.log(opposition);
                 for(let i = 0; i < opposition.length; ++i)
                 {
-                    if(opposition[i] === next.id)
+                    if(opposition[i] == next.id)
                     {
-                        console.log("Leaving Moves through if(opposition[i] === next.id)~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
                         return;
                     }
                 }
@@ -337,14 +325,12 @@ class diagnalmove extends Moves{
                 console.log("Entered if(moves_available)");
                 next.classList.add('moves');
             }
-            console.log("this.moves.push(next.id)");
+
             this.moves.push(next.id);
-            if(theoretical && next.children.item(0).children.item(0).id === 'lk' || theoretical && next.children.item(0).children.item(0).id === 'dk')
+            if(theoretical && (next.children.item(0).children.item(0).id === 'lk' || theoretical && next.children.item(0).children.item(0).id === 'dk'))
             {
                 if(!kingmove)
                 {
-                    console.log("kingmove New Recursion ))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))");
-                    console.log(this.Rowincrement);
                     this.DiaMoves(this.Rowincrement(row, iteration), this.Colincrememt(col, iteration), team, kingmove, moves_available, theoretical, iteration);
                 }
                 return;
@@ -354,24 +340,19 @@ class diagnalmove extends Moves{
         if(kingmove)
         {
             let opposition = GetApposingTeamMoves(team);
-            console.log("diaglu opposition");
-            console.log(opposition);
             for(let i = 0; i < opposition.length; ++i)
             {
-                if(opposition[i] === next.id)
+                if(opposition[i] == next.id)
                 return;
             }
         }
         if(moves_available)
         {
-            console.log("next.classList.add('moves');");
             next.classList.add('moves');
         }
-        console.log("this.moves.push(next.id);")
         this.moves.push(next.id);
         if(!kingmove)
         {
-            console.log("New Recursion ))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))");
             this.DiaMoves(this.Rowincrement(row, iteration), this.Colincrememt(col, iteration), team, kingmove, moves_available, theoretical, iteration);
         }
     }
@@ -533,7 +514,7 @@ class HorizontalMove extends diagnalmove{
                 console.log(opposition);
                 for(let i = 0; i < opposition.length; ++i)
                 {
-                    if(opposition[i] === next.id)
+                    if(opposition[i] == next.id)
                     return;
                 }
             }
@@ -559,7 +540,7 @@ class HorizontalMove extends diagnalmove{
             console.log(opposition);
             for(let i = 0; i < opposition.length; ++i)
             {
-                if(opposition[i] === next.id)
+                if(opposition[i] == next.id)
                 return;
             }
         }
@@ -881,7 +862,7 @@ class HorizontalMove extends diagnalmove{
             {
                 if(!kingmove)
                 {
-                    this.Moves(this.Rowincrement(row, iteration), this.Colincrememt(col, iteration), team, kingmove, moves_available, theoretical, iteration);
+                    this.Moves(this.incrementrow(row, iteration), this.incrememtcol(col, iteration), team, kingmove, moves_available, theoretical, iteration);
                 }
                 return;
             }
@@ -1285,6 +1266,7 @@ class Pawn extends Moves{
 class King extends HorizontalMove{
     GetMoves(spot, team, moves_available = true, theoretical = false)
     {
+        this.ClearMoves();
         this.getDiamoves(spot, team, true, moves_available, theoretical);
         this.getHormoves(spot, team, true, moves_available, theoretical);
     }
@@ -1293,6 +1275,7 @@ class King extends HorizontalMove{
 class Queen extends HorizontalMove{
     GetMoves(spot, team, moves_available = true, theoretical = false)
     {
+        this.ClearMoves();
         this.getDiamoves(spot, team, false, moves_available, theoretical);
         this.getHormoves(spot, team, false, moves_available, theoretical);
     }
@@ -1301,6 +1284,7 @@ class Queen extends HorizontalMove{
 class Rook extends HorizontalMove{
     GetMoves(spot, team, moves_available = true, theoretical = false)
     {
+        this.ClearMoves();
         this.getHormoves(spot, team, false, moves_available, theoretical);
     }
 }
@@ -1308,6 +1292,7 @@ class Rook extends HorizontalMove{
 class Bishop extends diagnalmove{
     GetMoves(spot, team, moves_available = true, theoretical = false)
     {
+        this.ClearMoves();
         this.getDiamoves(spot, team, false, moves_available, theoretical);
     }
 }

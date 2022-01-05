@@ -181,8 +181,6 @@ class PawnStart {
     team = 'unknown';
 }
 
-
-
 let Toppawn = new PawnStart(top.substr(0, 1), 'top', toppawn.children.item(0).children.item(0).ariaLabel);
 let Bottompawn = new PawnStart(bottom.substr(0, 1), 'bottom', bottompawn.children.item(0).children.item(0).ariaLabel);
 
@@ -205,7 +203,10 @@ let Player = new playerinfo(prompt("Please enter your name.", ''), prompt("Pleas
 socket.on('connect', () =>{
     socket.emit('join', (Player));
     if(socket.connected)
-    alert("You connected to room " + Player.room);
+    {
+        document.getElementById('title').innerText = 'Joined Room: ' + Player.room;
+        alert("You connected to room " + Player.room);
+    }
 });
 
 socket.on('error', (message) => {
@@ -1572,21 +1573,6 @@ w = w - 2;
                         return;
                     }
                     cp.ClearMoves();
-                    /*
-                    if(chesspiece.children.item(0).id === 'dk' || chesspiece.children.item(0).id === 'lk')
-                    king.ClearMoves();
-                    if(chesspiece.children.item(0).id === 'dq' || chesspiece.children.item(0).id === 'lq')
-                    queen.ClearMoves();
-                    if(chesspiece.children.item(0).className === 'lightrook' || chesspiece.children.item(0).className === 'darkrook')
-                    rook.ClearMoves();
-                    if(chesspiece.children.item(0).className === 'lightbishop' || chesspiece.children.item(0).className === 'darkbishop')
-                    bishop.ClearMoves();
-                    if(chesspiece.children.item(0).className === 'lightknight' || chesspiece.children.item(0).className === 'darkknight')
-                    knight.ClearMoves();
-                    if(chesspiece.children.item(0).className === 'lightpawn' || chesspiece.children.item(0).className === 'darkpawn')
-                    pawn.ClearMoves();
-                    */
-
                     return;
                 }
                 if(!chesspiecehome.children.item(0))
@@ -1607,7 +1593,9 @@ w = w - 2;
                         socket.emit('take-piece', (focusenter.children.item(0).children.item(0).id));
                         RemoveFromBoard(focusenter.children.item(0));
                         focusenter.removeChild(focusenter.children.item(0));
-                        socket.emit('move finished', Player);
+                        let piecename = chesspiece.children.item(0).className.toString();
+                        piecename = chesspiece.children.item(0).ariaLabel == 'light' ? piecename.toString().substr(5) : piecename.toString().substr(4);
+                        socket.emit('move finished', {P: Player, id: chesspiece.children.item(0).id, Name: piecename, spot: focusenter.id});
                     }
                     chesspiecehome.removeChild(chesspiece);
                         
@@ -1626,7 +1614,9 @@ w = w - 2;
                     }   
                     focusenter.appendChild(chesspiece);
                     cp.ClearMoves();
-                    socket.emit('move finished', Player);
+                    let piecename = chesspiece.children.item(0).className.toString();
+                    piecename = chesspiece.children.item(0).ariaLabel == 'light' ? piecename.toString().substr(5) : piecename.toString().substr(4);
+                    socket.emit('move finished', {P: Player, id: chesspiece.children.item(0).id, Name: piecename, spot: focusenter.id});
                     return;
                 }
                 else{
@@ -1858,6 +1848,37 @@ function SetSquareLeave()
     focusleave.classList.remove('drag-over');
 }
 
+function GetMirror(first, second)
+{
+    switch(first)
+    {
+        case '8': first = '1'; break;
+        case '7': first = '2'; break;
+        case '6': first = '3'; break;
+        case '5': first = '4'; break;
+        case '4': first = '5'; break;
+        case '3': first = '6'; break;
+        case '2': first = '7'; break;
+        case '1': first = '8'; break;
+        default: return 'Unknown spot';
+    }
+
+    switch(second)
+    {
+        case '8': second = '1'; break;
+        case '7': second = '2'; break;
+        case '6': second = '3'; break;
+        case '5': second = '4'; break;
+        case '4': second = '5'; break;
+        case '3': second = '6'; break;
+        case '2': second = '7'; break;
+        case '1': second = '8'; break;
+        default: return 'Unknown spot';
+    }
+
+    return first.toString() + second.toString();
+}
+
 
 socket.on('remove-piece', (data) =>{
     console.log("Move recieved to second board!");
@@ -1935,9 +1956,13 @@ socket.on('checkforcheck', (obj) => {
         console.log('piecemoves[i]: ' + piecemoves[i] + ' cp.parentElement.id: ' + cp.parentElement.parentElement.id);
         if(piecemoves[i] == cp.parentElement.parentElement.id)
         {
-            alert(obj.PlayerName + " put you in check!");
+            alert(obj.P.PlayerName + " put you in check!");
+            return;
         }
     } 
+
+    let LandingSpot = blackbottom ? GetMirror(obj.spot.toString().substr(0,1), obj.spot.toString().substr(1,2)) : document.getElementById(obj.id).parentElement.parentElement.id;
+    alert(obj.P.PlayerName + " moved their " + obj.Name + " to " + LandingSpot);
 });
 
 

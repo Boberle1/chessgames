@@ -13,7 +13,8 @@ var public = path.join(__dirname, 'public');
 
 const port = process.env.PORT || 8080;
 
-app.use('/', express.static('public'))
+app.use('/', express.static('public'));
+app.enable('post');
 
 let Path = '/whiteteam.html';
 let numclients = 0;
@@ -258,6 +259,7 @@ io.on('connection', (socket) =>{
 
     
     socket.on('move finished', (obj) =>{
+        console.log(obj);
         let room = FindRoom(socket.id);
         socket.in(room).emit('checkforcheck', (obj));
     });

@@ -6,7 +6,7 @@ const app = express();
 const server = require('http').Server(app);
 const io = require('socket.io')(server, {
     cors: {
-       origin:[deploy],
+       origin:[deploy]
     }
 })
 var public = path.join(__dirname, 'public');
@@ -214,16 +214,11 @@ function DeletePlayer(sock_id)
 }
 
 io.on('connection', (socket) =>{
-    if(numclients == 2)
-    {
-        numclients == -1;
-    }
-
-    console.log(socket.id);
     socket.on('join', (player) =>{
         if(roomholder.length === 0)
         {
             roomholder.push(new roominfo(player.room, player.PlayerName, socket.id, 'white'));
+            console.log(roomholder);
         }
         else
         {
@@ -231,11 +226,13 @@ io.on('connection', (socket) =>{
             {
                 if(roomholder[index].room === player.room)
                 {
+                    console.log('roomholder[index].room === player.room');
                     if(!roomholder[index].AddPlayer(player.PlayerName, socket.id, 'black'))
                     {
                         console.log("socket cannot connect, room is full!!!");
                         return;
                     }
+                    console.log(roomholder);
                 }
             }
         }
@@ -243,7 +240,7 @@ io.on('connection', (socket) =>{
         ++numclients;
         room = player.room;
         socket.join(player.room);
-        socket.in(player.room).emit('enterroom', (player.PlayerName + ` has entered the room: ${player.room}!`));
+        socket.in(player.room).emit('enterroom', (player.PlayerName + " has entered the room"));
     })
 
     socket.on('take-piece', (thing) =>{
@@ -280,6 +277,8 @@ io.on('connection', (socket) =>{
     socket.on('disconnect', () =>{
         numclients--;
         let answer = DeletePlayer(socket.id);
+        console.log('deleted player');
+        console.log(roomholder);
         socket.in(answer.room).emit('leaveroom', answer.name + " left the room!");
     })
 })

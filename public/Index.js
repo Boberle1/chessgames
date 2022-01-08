@@ -20,6 +20,9 @@ let blackteam = [];
 let whiteteam = [];
 let boardsquares = [];
 
+//after player makes move lock is set to true to wait until the other player has moved...
+let lock = false;
+
 function switchpiece(elem, h)
 {
     let stringname = '';
@@ -211,15 +214,30 @@ socket.on('connect', () =>{
 
 socket.on('error', (message) => {
     alert(Player.PlayerName + "has a problem with connecting! " + message);
+    return;
 });
 
 socket.on('leaveroom', (message) => {
     alert(message);
+    return;
 });
 
 socket.on('enterroom', (message) => {
     alert(message);
+    return;
 });
+
+socket.on('roomfull', (message) => {
+    alert(message);
+    socket.disconnect();
+    return;
+});
+
+if(socket.connected)
+{
+    document.getElementById('title').innerText = 'Joined Room: ' + Player.room;
+    alert("You connected to room " + Player.room);
+}
 
 class Moves{
     moves = [];
@@ -1518,6 +1536,10 @@ w = w - 2;
         {
             switchpiece(elem, h);
             child.addEventListener('dragstart', (e) => {
+                if(lock)
+                {
+                    return;
+                }
                 chesspiecehome = child.parentElement;
                 chesspiece = child;
                 if(child.children.item(0).id === 'lk' || child.children.item(0).id === 'dk')
@@ -1556,6 +1578,10 @@ w = w - 2;
         
         elem.addEventListener("dragend", function(e)
         {
+            if(lock)
+            {
+                return;
+            }
             if(focusenter === null)
             {
                 console.log('focusenter is equal to null!!!!');
@@ -1593,9 +1619,6 @@ w = w - 2;
                         socket.emit('take-piece', (focusenter.children.item(0).children.item(0).id));
                         RemoveFromBoard(focusenter.children.item(0));
                         focusenter.removeChild(focusenter.children.item(0));
-                        let piecename = chesspiece.children.item(0).className.toString();
-                        piecename = chesspiece.children.item(0).ariaLabel == 'light' ? piecename.toString().substr(5) : piecename.toString().substr(4);
-                        socket.emit('move finished', {P: Player, id: chesspiece.children.item(0).id, Name: piecename, spot: focusenter.id});
                     }
                     chesspiecehome.removeChild(chesspiece);
                         
@@ -1614,6 +1637,7 @@ w = w - 2;
                     }   
                     focusenter.appendChild(chesspiece);
                     cp.ClearMoves();
+                    lock = true;
                     let piecename = chesspiece.children.item(0).className.toString();
                     piecename = chesspiece.children.item(0).ariaLabel == 'light' ? piecename.toString().substr(5) : piecename.toString().substr(4);
                     socket.emit('move finished', {P: Player, id: chesspiece.children.item(0).id, Name: piecename, spot: focusenter.id});
@@ -1625,168 +1649,6 @@ w = w - 2;
                     alert("Invalid move!");
                     return;
                 }
-                if(chesspiece.children.item(0).id === 'dk' || chesspiece.children.item(0).id === 'lk')
-                {
-                    if(king.IsValidMove(focusenter.id))
-                    {
-                        if(focusenter.children.length)
-                        {
-                            socket.emit('take-piece', (focusenter.children.item(0).children.item(0).id));
-                            console.log('focchildren.id: ' + focusenter.children.item(0).id + ' chesspiec.id: ' + chesspiece.id);
-                            RemoveFromBoard(focusenter.children.item(0));
-                            focusenter.removeChild(focusenter.children.item(0));
-                            socket.emit('move finished', Player);
-                        }
-                        chesspiecehome.removeChild(chesspiece);
-                        focusenter.appendChild(chesspiece);
-                        console.log('focchildren.id: ' + focusenter.children.item(0).id + ' chesspiec.id: ' + chesspiece.id);
-                        king.ClearMoves();
-                        socket.emit('move finished', Player);
-                        return;
-                    }
-                    else{
-                        king.ClearMoves();
-                        socket.emit('invalid-move', ({cp: chesspiece.children.item(0).id, sp: chesspiece.parentElement.id}));
-                        alert("Invalid move!");
-                        return;
-                    }
-                }
-
-                if(chesspiece.children.item(0).id === 'dq' || chesspiece.children.item(0).id === 'lq')
-                {
-                    if(queen.IsValidMove(focusenter.id))
-                    {
-                        if(focusenter.children.length)
-                        {
-                            socket.emit('take-piece', (focusenter.children.item(0).children.item(0).id));
-                            RemoveFromBoard(focusenter.children.item(0));
-                            focusenter.removeChild(focusenter.children.item(0));
-                            socket.emit('move finished', Player);
-                        }
-                        chesspiecehome.removeChild(chesspiece);
-                        focusenter.appendChild(chesspiece);
-                        queen.ClearMoves();
-                        socket.emit('move finished', Player);
-                        return;
-                    }
-                    else{
-                        queen.ClearMoves();
-                        socket.emit('invalid-move', ({cp: chesspiece.children.item(0).id, sp: chesspiece.parentElement.id}));
-                        alert("Invalid move!");
-                        return;
-                    }
-                }
-                console.log("light rook className and id &&&&&&&&&&&&&&&&&&&&&" + chesspiece.children.item(0).className + ' ' + chesspiece.children.item(0).id)
-                if(chesspiece.children.item(0).className === 'lightrook' || chesspiece.children.item(0).className === 'darkrook')
-                {
-                    if(rook.IsValidMove(focusenter.id))
-                    {
-                        if(focusenter.children.length)
-                        {
-                            socket.emit('take-piece', (focusenter.children.item(0).children.item(0).id));
-                            RemoveFromBoard(focusenter.children.item(0));
-                            focusenter.removeChild(focusenter.children.item(0));
-                            socket.emit('move finished', Player);
-                        }
-                        chesspiecehome.removeChild(chesspiece);
-                        focusenter.appendChild(chesspiece);
-                        rook.ClearMoves();
-                        socket.emit('move finished', Player);
-                        return;
-                    }
-                    else{
-                        rook.ClearMoves();
-                        socket.emit('invalid-move', ({cp: chesspiece.children.item(0).id, sp: chesspiece.parentElement.id}));
-                        alert("Invalid move!");
-                        return;
-                    }
-                }
-                if(chesspiece.children.item(0).className === 'lightbishop' || chesspiece.children.item(0).className === 'darkbishop')
-                {
-                    if(bishop.IsValidMove(focusenter.id))
-                    {
-                        if(focusenter.children.length)
-                        {
-                            socket.emit('take-piece', (focusenter.children.item(0).children.item(0).id));
-                            RemoveFromBoard(focusenter.children.item(0));
-                            focusenter.removeChild(focusenter.children.item(0));
-                            socket.emit('move finished', Player);
-                        }
-                        chesspiecehome.removeChild(chesspiece);
-                        focusenter.appendChild(chesspiece);
-                        bishop.ClearMoves();
-                        socket.emit('move finished', Player);
-                        return;
-                    }
-                    else{
-                        bishop.ClearMoves();
-                        socket.emit('invalid-move', ({cp: chesspiece.children.item(0).id, sp: chesspiece.parentElement.id}));
-                        alert("Invalid move!");
-                        return;
-                    }
-                }
-                if(chesspiece.children.item(0).className === 'lightknight' || chesspiece.children.item(0).className === 'darkknight')
-                {
-                    if(knight.IsValidMove(focusenter.id))
-                    {
-                        if(focusenter.children.length)
-                        {
-                            socket.emit('take-piece', (focusenter.children.item(0).children.item(0).id));
-                            RemoveFromBoard(focusenter.children.item(0));
-                            focusenter.removeChild(focusenter.children.item(0));
-                            socket.emit('move finished', Player);
-                        }
-                        chesspiecehome.removeChild(chesspiece);
-                        focusenter.appendChild(chesspiece);
-                        knight.ClearMoves();
-                        socket.emit('move finished', Player);
-                        return;
-                    }
-                    else{
-                        knight.ClearMoves();
-                        socket.emit('invalid-move', ({cp: chesspiece.children.item(0).id, sp: chesspiece.parentElement.id}));
-                        alert("Invalid move!");
-                        return;
-                    }
-                }
-                if(chesspiece.children.item(0).className === 'lightpawn' || chesspiece.children.item(0).className === 'darkpawn')
-                {
-                    if(pawn.IsValidMove(focusenter.id))
-                    {
-                        if(focusenter.children.length)
-                        {
-                            socket.emit('take-piece', (focusenter.children.item(0).children.item(0).id));
-                            RemoveFromBoard(focusenter.children.item(0));
-                            focusenter.removeChild(focusenter.children.item(0));
-                            socket.emit('move finished', Player);
-                        }
-                        chesspiecehome.removeChild(chesspiece);
-                        
-                        if(focusenter.id.toString().slice(0,1) === '8' || focusenter.id.toString().slice(0,1) === '1')
-                        {
-                            let team = chesspiece.children.item(0).ariaLabel
-                            chesspiece.children.item(0).children.item(0).src;
-                            chesspiece.children.item(0).removeChild(chesspiece.children.item(0).children.item(0));
-                            chesspiece.children.item(0).classList.replace(team + 'pawn', team + 'queen');
-                            chesspiece.children.item(0).id = 'lq';
-                            let image = document.createElement('img');
-                            image.src = 'Chess_Pieces/sm' + team + 'queen.png';
-                            image.ariaLabel = team;
-                            chesspiece.children.item(0).appendChild(image);
-                        }
-                        
-                        focusenter.appendChild(chesspiece);
-                        pawn.ClearMoves();
-                        socket.emit('move finished', Player);
-                        return;
-                    }
-                    else{
-                        pawn.ClearMoves();
-                        socket.emit('invalid-move', ({cp: chesspiece.children.item(0).id, sp: chesspiece.parentElement.id}));
-                        alert("Invalid move!");
-                        return;
-                    }
-                }
             }
         });
         
@@ -1794,6 +1656,10 @@ w = w - 2;
 
         elem.addEventListener("dragenter", function(e)
         {
+            if(lock)
+            {
+                return;
+            }
             e.preventDefault();
             console.log('this.id in Dragenter is: ' + this.id);
             console.log('this.className is: ' + this.className);
@@ -1933,6 +1799,7 @@ socket.on('move-back', (obj) => {
 
 
 socket.on('checkforcheck', (obj) => {
+    lock = false;
     let cp = null;
     let piecemoves = [];
     let team = !blackbottom ? 'lt' : '';

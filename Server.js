@@ -230,6 +230,7 @@ io.on('connection', (socket) =>{
                     if(!roomholder[index].AddPlayer(player.PlayerName, socket.id, 'black'))
                     {
                         console.log("socket cannot connect, room is full!!!");
+                        console.log("what the fuck");
                         return;
                     }
                     console.log(roomholder);

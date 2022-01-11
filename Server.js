@@ -6,7 +6,7 @@ const app = express();
 const server = require('http').Server(app);
 const io = require('socket.io')(server, {
     cors: {
-       origin:[deploy]
+       origin:[local]
     }
 })
 var public = path.join(__dirname, 'public');
@@ -129,12 +129,42 @@ class roominfo{
 
         return false;
     }
+
+    GetPlayerStatusTeam()
+    {
+        if(this.player1.active)
+        {
+            if(this.player1.team == 'black') return {team: 'white', id: this.player1.socketid};
+            else return {team: 'black', id: this.player1.socketid};
+        }
+
+        if(this.player2.active)
+        {
+            if(this.player2.team == 'black') return {team: 'white', id: this.player2.socketid};
+            else return {team: 'black', id: this.player2.socketid};
+        }
+        return {team: 'white', id: 'no_id'};
+    }
+
+    GetOppositeId(sock_id)
+    {
+        if(this.player1.socketid === sock_id)
+        return this.player2.socketid;
+
+        if(this.player2.socketid === sock_id)
+        return this.player1.socketid;
+
+        console.log("Could not find player id in GetOppositeId in room holder!");
+        return '0';
+    }
 }
 
 let roomholder = [];
 let room = '';
 
 app.get('/', (req, res) =>{
+    res.sendFile(path.join(public, '/board.html'));
+    /*
     if(roomholder.length)
     {
         let team = '';
@@ -169,9 +199,19 @@ app.get('/', (req, res) =>{
     {
         res.sendFile(path.join(public, '/blackteam.html'))
     }
+    */
    console.log("Sent html file!");
 });
 
+function FindRoomIndex(sock_id)
+{
+    for(let i = 0; i < roomholder.length; ++i){
+        if(roomholder[i].HasPlayer(sock_id))
+            return i;
+    };
+    console.log("Error " + sock_id + " was not found in function FindRoom!");
+    return -1;
+}
 function FindRoom(sock_id){
     for(let i = 0; i < roomholder.length; ++i){
         if(roomholder[i].HasPlayer(sock_id))
@@ -193,6 +233,17 @@ function FindRoomandName(sock_id){
     };
 }
 
+function FindOppositePlayerID(sock_id)
+{
+    let index = FindRoomIndex(sock_id);
+    if(index === -1)
+    {
+        console.log('room index was not found in FindOppositePlayerID!');
+        return 0;
+    }
+    return roomholder[index].GetOppositeId(sock_id);
+}
+
 function DeletePlayer(sock_id)
 {
     for(let i = 0; i < roomholder.length; ++i){
@@ -212,12 +263,21 @@ function DeletePlayer(sock_id)
         p_name: 'null'
     }
 }
+let boarddata = null;
+function BoardData()
+{
+    if(boarddata)
+    return true;
 
+    return false;
+}
 io.on('connection', (socket) =>{
+    let p = null;
+    let team = 'white'
     socket.on('join', (player) =>{
         if(roomholder.length === 0)
         {
-            roomholder.push(new roominfo(player.room, player.PlayerName, socket.id, 'white'));
+            roomholder.push(new roominfo(player.room, player.PlayerName, socket.id, team));
             console.log(roomholder);
         }
         else
@@ -226,11 +286,10 @@ io.on('connection', (socket) =>{
             {
                 if(roomholder[index].room === player.room)
                 {
-                    console.log('roomholder[index].room === player.room');
-                    if(!roomholder[index].AddPlayer(player.PlayerName, socket.id, 'black'))
+                    p = roomholder[index].GetPlayerStatusTeam();
+                    if(!roomholder[index].AddPlayer(player.PlayerName, socket.id, p.team))
                     {
                         console.log("socket cannot connect, room is full!!!");
-                        console.log("what the fuck");
                         return;
                     }
                     console.log(roomholder);
@@ -238,9 +297,16 @@ io.on('connection', (socket) =>{
             }
         }
 
-        ++numclients;
         room = player.room;
         socket.join(player.room);
+        if(p) 
+        {
+            console.log("going to check stat of board in " + p.id + " !!!!!!!!!!!!!!");
+            team = p.team;
+            io.to(p.id).emit('check_state_of_board', ('status'));
+            p = null;
+        }
+        io.to(socket.id).emit('team-assigned', (team));
         socket.in(player.room).emit('enterroom', (player.PlayerName + " has entered the room"));
     })
 
@@ -261,6 +327,19 @@ io.on('connection', (socket) =>{
         let room = FindRoom(socket.id);
         socket.in(room).emit('checkforcheck', (obj));
     });
+
+    socket.on('castle move', (obj) => {
+        console.log(obj);
+        let room = FindRoom(socket.id);
+        socket.in(room).emit('send castle move', (obj));
+        let newobj ={
+            P: obj.P,
+            Name: 'King',
+            spot: obj.kinghome,
+            id: obj.king
+        }
+        socket.in(room).emit('checkforcheck', (newobj));
+    });
     
 
     socket.on('drag-leave', (obj) => {
@@ -278,10 +357,21 @@ io.on('connection', (socket) =>{
     socket.on('disconnect', () =>{
         numclients--;
         let answer = DeletePlayer(socket.id);
-        console.log('deleted player');
-        console.log(roomholder);
         socket.in(answer.room).emit('leaveroom', answer.name + " left the room!");
-    })
+    });
+
+    socket.on('state_is', (bool) => {
+        console.log('entered stat_is with socket.id: ' + socket.id);
+        //board is not a fresh board, moves have been made. Need to update the other players board that reconnected...
+        console.log('goin into get board data!!!!!!!!!');
+        if(!bool) io.to(socket.id).emit('get_board_data', ('please'));
+    });
+
+    socket.on('board_data', (data) => {
+        console.log('entered board_data with socket.id: ' + socket.id);
+        console.log(data);
+        io.to(FindOppositePlayerID(socket.id)).emit('update-board', (data)); 
+    });
 })
 
 server.listen(port, () => {

@@ -9,13 +9,8 @@
             "request": "launch",
             "name": "Launch Chrome against localhost",
             "url": "http://localhost:8080",
-<<<<<<< HEAD
-            "file": "C:\\Users\\brand\\TestPage\\public\\Index.html",
-            "webRoot": "${workspaceFolder}\\public",
-=======
          //   "file": "C:\\Users\\brand\\TestPage\\public\\whiteteam.html",
             "webRoot": "${workspaceFolder}",
->>>>>>> d481802cdda8f0d9ff0638964738ea19aecb9041
             "mode": "development"
         }
     ]

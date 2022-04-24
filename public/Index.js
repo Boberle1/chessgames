@@ -191,7 +191,7 @@ function switchpiece(elem, h)
 
 window.addEventListener('resize', (e) => {
     console.log("Entered window addevent listener :::::::::::::::::::::::::::::::::::::::");
-
+    
     let buttonh = (window.innerHeight * .03);
     let buttonindex = buttonh.toString().indexOf('.');
     if(buttonindex == -1) buttonindex = buttonh.toString().length
@@ -1714,7 +1714,6 @@ function init()
     console.log("Piecehome obj");
     console.log(piecehome);
 }
-
 function SetSquareLeave()
 {
     focusleave = this;

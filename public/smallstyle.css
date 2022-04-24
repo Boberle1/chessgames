@@ -1,0 +1,154 @@
+header>h1{
+    text-align: center;
+    align-self: start;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+}
+
+.button{
+    position:absolute;
+    margin-top: 30px;
+    text-align: center;
+    color: white;
+    background-color: blue;
+    height: 20px;
+    width: 30px;
+}
+
+.Chess-Board {
+    position:absolute;
+    margin-top: 20px;
+    top: 50%;
+    left: 50%;
+    -webkit-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%); 
+    height: 75%;
+    aspect-ratio: 1/1;
+    border: 8px solid #461707;
+}
+
+.black{
+    position: relative;
+    height: 10%;
+    background-color: #3E3E41;
+    border: 1px black solid;
+    float:left;
+    display:grid;
+    justify-content: center;
+    align-items: center;
+    aspect-ratio: 1/1;
+}
+
+.white{
+    position: relative;
+    height: 10%;
+    background-color: #E1E0F9;
+    border: 1px black solid;
+    float:left;
+    display:grid;
+    justify-content: center;
+    align-items: center;
+    aspect-ratio: 1/1;
+}
+
+.lightpawn{
+    position:absolute;
+    top: 50%;
+    left: 50%;
+    -webkit-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%); 
+}
+
+.darkpawn{
+    position:absolute;
+    top: 50%;
+    left: 50%;
+    -webkit-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+}
+
+.lightrook{
+    position:absolute;
+    top: 50%;
+    left: 50%;
+    -webkit-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+}
+
+.lightknight{
+    position:absolute;
+    top: 50%;
+    left: 50%;
+    -webkit-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+}
+
+.lightbishop{
+    position:absolute;
+    top: 50%;
+    left: 50%;
+    -webkit-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+}
+
+.lightking{
+    position:absolute;
+    top: 50%;
+    left: 50%;
+    -webkit-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+}
+
+.lightqueen{
+    position:absolute;
+    top: 50%;
+    left: 50%;
+    -webkit-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+}
+
+.darkrook{
+    position:absolute;
+    top: 50%;
+    left: 50%;
+    -webkit-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+}
+
+.white:hover{
+    background-color: #DBCCC6;
+}
+
+.black:hover{
+    background-color: #817E7D;
+}
+
+.white-drag-over{
+    width: 86px;
+    height: 86px;
+    background-color: #DBCCC6;
+    border: 2px black solid;
+}
+
+.black-drag-over{
+    width: 86px;
+    height: 86px;
+    background-color: #817E7D;
+    border: 2px black solid;
+}
+
+.drag-over{
+    width: 86px;
+    height: 86px;
+    border: 2px red solid;
+}
+
+.land{
+    width: 88px;
+    height: 88px;
+    border: 1px black solid;
+}
+
+.moves{
+    background-color: #65b886;
+} 

@@ -23,6 +23,7 @@ let whiteteam = [];
 let boardsquares = [];
 let firstconnection = false;
 let Opponent = "Person";
+let check = false;
 
 console.log("We are in the right one!!!");
 
@@ -480,7 +481,20 @@ if(socket.connected)
 
 class Moves{
     moves = [];
+    lu = [];
+    ru = [];
+    ld = [];
+    rd = [];
+    vu = [];
+    hr = [];
+    vd = [];
+    hl = [];
     king = false;
+    queen = false;
+    bishop = false;
+    knight = false;
+    rook = false;
+    pawn = false;
     IsValidMove(id)
     {
         for(let i = 0; i < this.moves.length; ++i)
@@ -516,11 +530,34 @@ class Moves{
         this.king = k;
     }
 
+    SetPiece(num)
+    {
+        switch(num)
+        {
+            case 1: this.king = true; return;
+            case 2: this.queen = true; return;
+            case 3: this.bishop = true; return;
+            case 4: this.knight = true; return;
+            case 5: this.rook = true; return;
+            case 6: this.pawn = true; return;
+        }
+        console.log("The number passed as paramater in Moves.SetPiece did not match! Paramater is: " + num);
+    }
+
     IsKing()
     {
         return this.king;
     }
 
+    IsKnight()
+    {
+        return knight;
+    }
+
+    IsPawn()
+    {
+        return pawn;
+    }
 }
 
 class diagnalmove extends Moves{
@@ -758,7 +795,63 @@ class HorizontalMove extends diagnalmove{
         if(next.children.length) return;
         this.CastleCheck(row, this.incrementcol(col, iter), iter)
     }
+/*
+    SomeMoves(row, col, team, kingmove, moves_available, theoretical, iteration)
+    {
+        let findpiece = false;
+        if(!this.check(row, col, iteration))
+        {
+            return;
+        }
 
+        let next = document.getElementById(row.toString() + col.toString());
+        if(next === null)
+        {
+            console.log("Next is null in diagnalRU!");
+            return;
+        }
+
+        if(next.children.length)
+        {
+            findpiece = true;
+            if(next.children.item(0).children.item(0).ariaLabel === team)
+            {
+                if(theoretical && !this.onemove)
+                {
+                    this.onemove = true;
+                    if(moves_available)
+                    {
+                        next.classList.add('moves');
+                    }
+                    this.moves.push(next.id);
+                    return;
+                }
+                return;
+            }
+        }
+
+        if(kingmove)
+        {
+            let opposition = GetApposingTeamMoves(team);
+            console.log("diaglu opposition");
+            console.log(opposition);
+            for(let i = 0; i < opposition.length; ++i)
+            {
+                if(opposition[i] === next.id)
+                return;
+            }
+        }
+
+        if(moves_available)
+        {
+            next.classList.add('moves');
+        }
+        this.moves.push(next.id);
+
+        if(!findpiece && !kingmove)
+        this.Moves(this.incrementrow(row, iteration), this.incrementcol(col, iteration), team, kingmove, moves_available, theoretical, iteration);
+    }
+*/
     Moves(row, col, team, kingmove, moves_available, theoretical, iteration)
     {
         if(!this.check(row, col, iteration))
@@ -785,6 +878,7 @@ class HorizontalMove extends diagnalmove{
                     this.moves.push(next.id);
                     return;
                 }
+                console.log("You hit the return because ths.onemove is used and necessary^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
                 return;
             }
             if(kingmove)
@@ -1194,8 +1288,20 @@ class Pawn extends Moves{
                 console.log("left is null in MoveForward pawn!");
                 return;
             }
+
+            if(theoretical)
+            {
+                if(moves_available)
+                {
+                    diag.classList.add('moves');
+                }
+                this.moves.push(diag.id);
+                return;
+            }
+
             if(diag.children.length)
             {
+                /*
                 if(theoretical)
                 {
                     console.log(diag);
@@ -1212,6 +1318,7 @@ class Pawn extends Moves{
                     }
                     return;
                 }
+                */
                 if(diag.children.item(0).children.item(0).ariaLabel !== team)
                 {
                     console.log('row: ' + row + ' col: ' + col);
@@ -1224,6 +1331,7 @@ class Pawn extends Moves{
                 }
                 return;
             }
+            /*
             if(theoretical)
             {
                 if(moves_available)
@@ -1232,6 +1340,7 @@ class Pawn extends Moves{
                 }
                 this.moves.push(diag.id);
             }
+            */
         }
     }
 
@@ -1294,10 +1403,15 @@ class Bishop extends diagnalmove{
 let king = new King();
 king.SetKing(true);
 let queen = new Queen();
+queen.SetPiece(2);
 let rook = new Rook();
+rook.SetPiece(5);
 let bishop = new Bishop();
+bishop.SetPiece(3);
 let knight = new Knight();
+knight.SetPiece(4);
 let pawn = new Pawn();
+pawn.SetPiece(6);
 
 function GetPiece(id)
 {
@@ -1822,18 +1936,21 @@ socket.on('checkforcheck', (obj) => {
         piecemoves = whitemoves;
     }
 
-    console.log('piecemoves.length');
+    console.log('piecemoves.length>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
     console.log(piecemoves);
     for(let i = 0; i < piecemoves.length; ++i)
     {
-        console.log('piecemoves[i]: ' + piecemoves[i] + ' cp.parentElement.id: ' + cp.parentElement.parentElement.id);
         if(piecemoves[i] == cp.parentElement.parentElement.id)
         {
+            check = true;
+            let LandingSpot = blackbottom ? GetMirror(obj.spot.toString().substr(0,1), obj.spot.toString().substr(1,2)) : document.getElementById(obj.id).parentElement.parentElement.id;
+            document.getElementById('status').innerHTML = obj.P.PlayerName  + " Put You in Check with thier " + obj.Name + ", Your Move";
             alert(obj.P.PlayerName + " put you in check!");
             return;
         }
     } 
 
+    check = false;
     let LandingSpot = blackbottom ? GetMirror(obj.spot.toString().substr(0,1), obj.spot.toString().substr(1,2)) : document.getElementById(obj.id).parentElement.parentElement.id;
     document.getElementById('status').innerHTML = obj.P.PlayerName + " moved their " + obj.Name + " to " + LandingSpot + ", Your Move";
     Opponent = obj.P.PlayerName;

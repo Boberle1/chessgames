@@ -3,11 +3,26 @@ header>h1{
     align-self: start;
     margin-bottom: 20px;
     padding-bottom: 20px;
+    background-image: linear-gradient(to right, black, grey);
+    color:blanchedalmond
+}
+
+.paragraph{
+    text-align: center;
+    color:darkgray;
+    size: 20px;
+    font-size: 25px;
+}
+
+html{
+    height: 100%;
+}
+body{
+    background-image: linear-gradient(to bottom right, #663a3a, #823c3c, #8a5757);
 }
 
 .button{
     position:absolute;
-    margin-top: 30px;
     text-align: center;
     color: white;
     background-color: blue;
@@ -17,14 +32,27 @@ header>h1{
 
 .Chess-Board {
     position:absolute;
-    margin-top: 20px;
+    margin-top: 30px;
     top: 50%;
     left: 50%;
     -webkit-transform: translate(-50%, -50%);
     transform: translate(-50%, -50%); 
     height: 75%;
     aspect-ratio: 1/1;
-    border: 8px solid #461707;
+    background-color: transparent;
+}
+
+.square{
+    position: relative;
+    height: 10%;
+    background-color: white;
+    border: 1px white transparent;
+    float:left;
+    display:grid;
+    justify-content: center;
+    align-items: center;
+    aspect-ratio: 1/1;
+    background-color: transparent;
 }
 
 .black{

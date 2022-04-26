@@ -18,11 +18,16 @@ let whitemoves = [];
 let blackmoves = [];
 let blackonboard = [];
 let whiteonboard = [];
+let blackoffboard = [];
+let whiteoffboard = [];
+let rightsideboard = [];
+let leftsideboard = [];
 let blackteam = [];
 let whiteteam = [];
 let boardsquares = [];
 let firstconnection = false;
 let Opponent = "Person";
+let status = document.getElementById('p');
 let check = false;
 
 console.log("We are in the right one!!!");
@@ -60,9 +65,53 @@ function Fillboardsquaresarray()
     h = parseInt(h.toString().substr(0, index));
     let total = h * 8 + 16;
     board.style.height = total.toString() + 'px';
+    total = h * 4 + total + 8;
     board.style.width = total.toString() + 'px';
     let item2 = item;
     let itemend = 8;
+
+    leftsideboard.push(document.getElementById('01'));
+    leftsideboard.push(document.getElementById('00'));
+    rightsideboard.push(document.getElementById('19'));
+    rightsideboard.push(document.getElementById('20'));
+    leftsideboard.push(document.getElementById('020'));
+    leftsideboard.push(document.getElementById('02'));
+    rightsideboard.push(document.getElementById('29'));
+    rightsideboard.push(document.getElementById('30'));
+    leftsideboard.push(document.getElementById('030'));
+    leftsideboard.push(document.getElementById('03'));
+    rightsideboard.push(document.getElementById('39'));
+    rightsideboard.push(document.getElementById('40'));
+    leftsideboard.push(document.getElementById('040'));
+    leftsideboard.push(document.getElementById('04'));
+    rightsideboard.push(document.getElementById('49'));
+    rightsideboard.push(document.getElementById('50'));
+    leftsideboard.push(document.getElementById('050'));
+    leftsideboard.push(document.getElementById('05'));
+    rightsideboard.push(document.getElementById('59'));
+    rightsideboard.push(document.getElementById('60'));
+    leftsideboard.push(document.getElementById('060'));
+    leftsideboard.push(document.getElementById('06'));
+    rightsideboard.push(document.getElementById('69'));
+    rightsideboard.push(document.getElementById('70'));
+    leftsideboard.push(document.getElementById('070'));
+    leftsideboard.push(document.getElementById('07'));
+    rightsideboard.push(document.getElementById('79'));
+    rightsideboard.push(document.getElementById('80'));
+    leftsideboard.push(document.getElementById('080'));
+    leftsideboard.push(document.getElementById('08'));
+    rightsideboard.push(document.getElementById('89'));
+    rightsideboard.push(document.getElementById('90'));
+
+    let sidesquare_dememsions = h + 2;
+    for(let i = 0; i < rightsideboard.length; ++i)
+    {
+        rightsideboard[i].style.height = sidesquare_dememsions.toString() +'px';
+        rightsideboard[i].style.width = sidesquare_dememsions.toString() +'px';
+        leftsideboard[i].style.height = sidesquare_dememsions.toString() +'px';
+        leftsideboard[i].style.width = sidesquare_dememsions.toString() +'px';
+    }
+
     while(true)
     {
         let elem = document.getElementById(item.toString() + item2.toString());
@@ -206,10 +255,11 @@ window.addEventListener('resize', (e) => {
     h = parseInt(h.toString().substr(0, 2));
     console.log("h: " + h);
     let w = h;
-    let total = h * 8;
+    let total = h * 12;
     h -= 2;
     console.log("total: " + total);
     board.style.width = total.toString() + 'px';
+    total = (h + 2) * 8;
     board.style.height = total.toString() + 'px';
     for(let i = 0; i < boardsquares.length; ++i){
         boardsquares[i].style.height = h.toString() + 'px';
@@ -220,6 +270,24 @@ window.addEventListener('resize', (e) => {
             switchpiece(boardsquares[i], h - 2);
         }
     };
+
+    let sidesquare_dememsions = h + 2;
+    for(let i = 0; i < rightsideboard.length; ++i)
+    {
+        rightsideboard[i].style.height = sidesquare_dememsions.toString() + 'px';
+        rightsideboard[i].style.width = sidesquare_dememsions.toString() + 'px';
+        leftsideboard[i].style.height = sidesquare_dememsions.toString() + 'px';
+        leftsideboard[i].style.width = sidesquare_dememsions.toString() + 'px';
+        
+        if(rightsideboard[i].children.length)
+        {
+            switchpiece(rightsideboard[i], h - 2);
+        }
+        if(leftsideboard[i].children.length)
+        {
+            switchpiece(leftsideboard[i], h - 2);
+        }
+    }
     console.log("Exited window addevent listener :::::::::::::::::::::::::::::::::::::::");
 });
 
@@ -229,6 +297,22 @@ function GetApposingTeamMoves(team)
     return blackmoves;
 
     return whitemoves;
+}
+
+function setaside(array, piece)
+{
+    for(let i = 0; i < array.length; ++i)
+    {
+        console.log(array[i].children.length);
+        if(!array[i].children.length)
+        {
+            array[i].appendChild(piece);
+            return;
+        }
+    }
+    console.log("array");
+    console.log(array);
+    console.log("setaside function with paramater array is full!>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 }
 
 function RemoveFromBoard(elem)
@@ -246,6 +330,10 @@ function RemoveFromBoard(elem)
             {
                 console.log("ENTERE ARRAYYYYY!!!" + whiteonboard[i].children.item(0).id + " " + elem.children.item(0).id)
                 whiteonboard.splice(i, 1);
+                whiteoffboard.push(elem)
+                elem.parentElement.removeChild(elem);
+                if(blackbottom) setaside(rightsideboard, elem);
+                else setaside(leftsideboard, elem);
                 console.log(whiteonboard);
                 return;
             }
@@ -264,6 +352,10 @@ function RemoveFromBoard(elem)
             {
                 console.log("ENTERE ARRAYYYYY!!!" + blackonboard[i].children.item(0).id + " " + elem.children.item(0).id);
                 blackonboard.splice(i, 1);
+                blackoffboard.push(elem);
+                elem.parentElement.removeChild(elem);
+                if(blackbottom) setaside(leftsideboard, elem);
+                else setaside(rightsideboard, elem);
                 console.log(blackonboard);
                 return;
             }
@@ -409,6 +501,7 @@ function SetboardBottom(team)
 
 function Mirrorboard()
 {
+    console.log("Youve entered Mirrorboard!)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))");
     let end = boardsquares.length;
     for(let i = 0; i < boardsquares.length / 2; ++i)
     {
@@ -418,6 +511,29 @@ function Mirrorboard()
         boardsquares[end].id = temp; 
   //      console.log("swap " + boardsquares[i].id + " with " + boardsquares[end].id)
     }
+
+    /*
+    for(let i = 0; i < rightsideboard.length; ++i)
+    {
+        let temp = leftsideboard[i];
+        if(i == 0)
+        {
+            temp = leftsideboard[i];
+            leftsideboard[i] = leftsideboard[i + 1];
+            leftsideboard[i + 1] = leftsideboard[i];
+            continue;
+        }
+        if(i == 1)
+        {
+            leftsideboard[i] = rightsideboard[end + 1];
+            continue;
+        }
+        if(i % 2 == 0) leftsideboard[i] = rightsideboard[end - 1];
+        else leftsideboard[i] = rightsideboard[end + 1];
+        leftsideboard[i].id = rightsideboard[end].id
+        rightsideboard[end].id = temp;
+    }
+    */
 }
 
 function IsMoved(elem)
@@ -1699,8 +1815,9 @@ function SetListeners(elem)
                 {
                     socket.emit('take-piece', (focusenter.children.item(0).children.item(0).id));
                     RemoveFromBoard(focusenter.children.item(0));
-                    focusenter.removeChild(focusenter.children.item(0));
+                 //   focusenter.removeChild(focusenter.children.item(0));
                 }
+
                 chesspiecehome.removeChild(chesspiece);
                         
                 if((focusenter.id.toString().slice(0,1) === '8' || focusenter.id.toString().slice(0,1) === '1') && (chesspiece.children.item(0).className == 'lightpawn' ||
@@ -1720,7 +1837,7 @@ function SetListeners(elem)
                 cp.ClearMoves();
                 lock = true;
                 let piecename = chesspiece.children.item(0).className.toString();
-                document.getElementById('status').innerHTML = Opponent + "'s Move";
+                status.innerHTML = Opponent + "'s Move";
                 piecename = chesspiece.children.item(0).ariaLabel == 'light' ? piecename.toString().substr(5) : piecename.toString().substr(4);
                 socket.emit('move finished', {P: Player, id: chesspiece.children.item(0).id, Name: piecename, spot: focusenter.id});
                 freshboard = false;
@@ -1828,6 +1945,7 @@ function init()
     console.log("Piecehome obj");
     console.log(piecehome);
 }
+
 function SetSquareLeave()
 {
     focusleave = this;
@@ -1865,7 +1983,6 @@ function GetMirror(first, second)
     return first.toString() + second.toString();
 }
 
-
 socket.on('remove-piece', (data) =>{
     console.log("Move recieved to second board!");
     let cp = document.getElementById(data);
@@ -1890,7 +2007,7 @@ socket.on('remove-piece', (data) =>{
     }
 
     RemoveFromBoard(cpparent);
-    parent.removeChild(cpparent);
+  //  parent.removeChild(cpparent);
 });
 
 socket.on('monitor-drag-in', (obj) => {
@@ -1952,7 +2069,7 @@ socket.on('checkforcheck', (obj) => {
 
     check = false;
     let LandingSpot = blackbottom ? GetMirror(obj.spot.toString().substr(0,1), obj.spot.toString().substr(1,2)) : document.getElementById(obj.id).parentElement.parentElement.id;
-    document.getElementById('status').innerHTML = obj.P.PlayerName + " moved their " + obj.Name + " to " + LandingSpot + ", Your Move";
+    status.innerHTML = obj.P.PlayerName + " moved their " + obj.Name + " to " + LandingSpot + ", Your Move";
     Opponent = obj.P.PlayerName;
   //  alert(obj.P.PlayerName + " moved their " + obj.Name + " to " + LandingSpot);
 });

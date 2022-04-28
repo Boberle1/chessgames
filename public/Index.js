@@ -166,6 +166,7 @@ class FirstMoves{
 let Darkteam = new FirstMoves();
 let Lightteam = new FirstMoves();
 
+// Recording the first moves of the rooks and king.. If they are moved then the player can no longer castle...
 function HandleFirstMove(elem)
 {
     if(elem.id == 'dt')
@@ -203,6 +204,27 @@ function HandleFirstMove(elem)
             Lightteam.king = true;
             return;
         }
+    }
+}
+
+//Checks to see if the rooks or king were moved prior to attempting a castle move...
+function ValidateCastleMove(elem)
+{
+    if(elem.id == 'dt')
+    {
+        if(elem.children.item(0).id == 'dr1') return Darkteam.rook1;
+        if(elem.children.item(0).id == 'dr2') return Darkteam.rook2;
+        if(elem.children.item(0).id == 'dk') return Darkteam.king;
+
+        return false;
+    }
+    else if(elem.id == 'lt')
+    {
+        if(elem.children.item(0).id == 'lr1') return Lightteam.rook1;
+        if(elem.children.item(0).id == 'lr2') return Lightteam.rook2;
+        if(elem.children.item(0).id == 'lk') return Lightteam.king;
+        
+        return false;
     }
 }
 
@@ -1826,23 +1848,27 @@ function SetListeners(elem)
                     if(focusenter.children.length)
                     {
                         let rk = focusenter.children.item(0);
-                        focusenter.removeChild(rk);
-                        chesspiecehome.removeChild(chesspiece);
-                        focusenter.appendChild(chesspiece);
-                        chesspiecehome.appendChild(rk);
-                        HandleFirstMove(chesspiece);
-                        cp.ClearMoves();
-                        lock = true;
-                        document.getElementById('status').innerHTML = Opponent + "'s Move";
-                        socket.emit('castle move', {P: Player, king: chesspiece.children.item(0).id, rook: rk.children.item(0).id, rookhome: chesspiecehome.id, kinghome: focusenter.id});
-                        return;
+
+                        //Attempting a castle move...
+                        if(chesspiece.id == rk.id)
+                        {
+                            focusenter.removeChild(rk);
+                            chesspiecehome.removeChild(chesspiece);
+                            focusenter.appendChild(chesspiece);
+                            chesspiecehome.appendChild(rk);
+                            HandleFirstMove(chesspiece);
+                            cp.ClearMoves();
+                            lock = true;
+                            status.innerHTML = Opponent + "'s Move";
+                            socket.emit('castle move', {P: Player, king: chesspiece.children.item(0).id, rook: rk.children.item(0).id, rookhome: chesspiecehome.id, kinghome: focusenter.id});
+                            return;  
+                        }
                     }
                 }
                 if(focusenter.children.length)
                 {
                     socket.emit('take-piece', (focusenter.children.item(0).children.item(0).id));
                     RemoveFromBoard(focusenter.children.item(0));
-                 //   focusenter.removeChild(focusenter.children.item(0));
                 }
 
                 chesspiecehome.removeChild(chesspiece);
@@ -2091,7 +2117,7 @@ socket.on('checkforcheck', (obj) => {
         {
             check = true;
             let LandingSpot = blackbottom ? GetMirror(obj.spot.toString().substr(0,1), obj.spot.toString().substr(1,2)) : document.getElementById(obj.id).parentElement.parentElement.id;
-            document.getElementById('status').innerHTML = obj.P.PlayerName  + " Put You in Check with thier " + obj.Name + ", Your Move";
+            status.innerHTML = obj.P.PlayerName  + " Put You in Check with thier " + obj.Name + ", Your Move";
             alert(obj.P.PlayerName + " put you in check!");
             return;
         }

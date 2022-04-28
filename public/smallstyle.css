@@ -27,17 +27,20 @@ body{
     background-image: linear-gradient(to right, #4707f8, #0e034b, #4507d6);
 }
 
+.buttoncontainer{
+    display:flexbox;
+}
+
 .button{
+    min-height: 20px;
+    min-width: 30px;
     padding-top: 2px;
     text-align: center;
     color: black;
     background-color: darkgray;
     height: 20px;
     width: 30px;
-}
-
-.rounded-corners{
-    border-radius: 15px;
+    overflow: hidden;
 }
 
 .Chess-Board {

@@ -50,14 +50,14 @@ let freshboard = true;
 
 function Fillboardsquaresarray()
 {
-    let buttonh = (window.innerHeight * .03);
-    let buttonindex = buttonh.toString().indexOf('.');
-    if(buttonindex == -1) buttonindex = buttonh.toString().length
-    movesbutton.style.height = buttonh.toString().substr(0, buttonindex) + 'px';
-    let buttonw = (window.innerWidth * .05);
-    buttonindex = buttonw.toString().indexOf('.');
-    if(buttonindex == -1) buttonindex = buttonw.toString().length
-    movesbutton.style.width = buttonw.toString().substr(0, buttonindex) + 'px';
+  //  let buttonh = (window.innerHeight * .03);
+  //  let buttonindex = buttonh.toString().indexOf('.');
+  //  if(buttonindex == -1) buttonindex = buttonh.toString().length
+  //  movesbutton.style.height = buttonh.toString().substr(0, buttonindex) + 'px';
+  //  let buttonw = (window.innerWidth * .05);
+  //  buttonindex = buttonw.toString().indexOf('.');
+ //   if(buttonindex == -1) buttonindex = buttonw.toString().length
+  //  movesbutton.style.width = buttonw.toString().substr(0, buttonindex) + 'px';
     let h = (.75 * window.innerHeight);
     h /= 8;
     let index = h.toString().indexOf('.');
@@ -330,8 +330,8 @@ function RemoveFromBoard(elem)
             {
                 console.log("ENTERE ARRAYYYYY!!!" + whiteonboard[i].children.item(0).id + " " + elem.children.item(0).id)
                 whiteonboard.splice(i, 1);
-                whiteoffboard.push(elem)
                 elem.parentElement.removeChild(elem);
+                whiteoffboard.push(elem);
                 if(blackbottom) setaside(rightsideboard, elem);
                 else setaside(leftsideboard, elem);
                 console.log(whiteonboard);
@@ -352,8 +352,8 @@ function RemoveFromBoard(elem)
             {
                 console.log("ENTERE ARRAYYYYY!!!" + blackonboard[i].children.item(0).id + " " + elem.children.item(0).id);
                 blackonboard.splice(i, 1);
-                blackoffboard.push(elem);
                 elem.parentElement.removeChild(elem);
+                blackoffboard.push(elem);
                 if(blackbottom) setaside(leftsideboard, elem);
                 else setaside(rightsideboard, elem);
                 console.log(blackonboard);
@@ -1709,6 +1709,23 @@ function GetApposingMoves(team)
     }
 }
 
+function IsPieceOffBoard(elem)
+{
+    console.log("elem in IsPieceOffBoard()@@@@@@@@@@@@@@@@");
+    console.log(elem.id);
+    console.log(elem)
+    for(let i = 0; i < whiteoffboard.length; ++i)
+    {
+        if(elem == whiteoffboard[i]) return true;
+    }
+    for(let i = 0; i < blackoffboard.length; ++i)
+    {
+        if(elem == blackoffboard[i]) return true;
+    }
+    console.log("IsPieceOffBoard is returning false!!");
+    return false;
+}
+
 function SetListeners(elem)
 {
     let child = elem.firstElementChild;
@@ -1721,6 +1738,16 @@ function SetListeners(elem)
             }
             chesspiecehome = child.parentElement;
             chesspiece = child;
+
+            console.log("this supposed to be when the child enters IsPieceOffBoard()@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+            console.log(child);
+            if(IsPieceOffBoard(child))
+            {
+                console.log("Enterd prevent default move@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+                e.preventDefault;
+                return;
+            }
+
             if(child.children.item(0).id === 'lk' || child.children.item(0).id === 'dk')
             {
                 GetApposingMoves(child.children.item(0).ariaLabel);
@@ -1757,7 +1784,7 @@ function SetListeners(elem)
         
     elem.addEventListener("dragend", function(e)
     {
-        if(lock)
+        if(lock || IsPieceOffBoard(chesspiece))
         {
             return;
         }
@@ -1857,7 +1884,7 @@ function SetListeners(elem)
 
     elem.addEventListener("dragenter", function(e)
     {
-        if(lock)
+        if(lock || IsPieceOffBoard(chesspiece))
         {
             return;
         }
@@ -1885,6 +1912,7 @@ function SetListeners(elem)
             square: focusenter.id
         }));
     });
+
     elem.addEventListener('dragover', (e) => {
         if(!lock) e.preventDefault();
     });
@@ -1892,13 +1920,15 @@ function SetListeners(elem)
 
 function init()
 {
-    movesbutton.addEventListener('click', (e) => {
+        movesbutton.addEventListener('click', (e) => {
     
         if(availablemoves)
         { 
             availablemoves = false;
+            movesbutton.innerHTML = "Moves Off";
             return;
         }
+        movesbutton.innerHTML = "Moves On";
         availablemoves = true;
     });
     

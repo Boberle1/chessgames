@@ -1,38 +1,49 @@
+
+header{
+    
+    background-image: linear-gradient(to bottom, #030000, #252323);
+}
+
 header>h1{
+    vertical-align:center;
     text-align: center;
     align-self: start;
-    margin-bottom: 20px;
-    padding-bottom: 20px;
-    background-image: linear-gradient(to right, black, grey);
     color:blanchedalmond
 }
 
 .paragraph{
+    vertical-align: middle;
     text-align: center;
     color:darkgray;
     size: 20px;
     font-size: 25px;
+    padding-bottom: 5px;
 }
 
 html{
     height: 100%;
 }
 body{
-    background-image: linear-gradient(to bottom right, #663a3a, #823c3c, #8a5757);
+    background-image: linear-gradient(to right, #4707f8, #0e034b, #4507d6);
 }
 
 .button{
-    position:absolute;
+    padding-top: 2px;
     text-align: center;
-    color: white;
-    background-color: blue;
+    color: black;
+    background-color: darkgray;
     height: 20px;
     width: 30px;
+}
+
+.rounded-corners{
+    border-radius: 15px;
 }
 
 .Chess-Board {
     position:absolute;
     margin-top: 30px;
+    padding-top: 20px;
     top: 50%;
     left: 50%;
     -webkit-transform: translate(-50%, -50%);
@@ -58,7 +69,7 @@ body{
 .black{
     position: relative;
     height: 10%;
-    background-color: #3E3E41;
+    background-image: linear-gradient(to right, #3E3E41, #6f6f74, #2a2a2c);
     border: 1px black solid;
     float:left;
     display:grid;
@@ -70,7 +81,7 @@ body{
 .white{
     position: relative;
     height: 10%;
-    background-color: #E1E0F9;
+    background-image: linear-gradient(to right, #E1E0F9, #a6a5c0, #E1E0F9);
     border: 1px black solid;
     float:left;
     display:grid;
@@ -144,11 +155,11 @@ body{
 }
 
 .white:hover{
-    background-color: #DBCCC6;
+    background-image: linear-gradient(to right, #c2c1dd, #7c7b97, #a8a6da);
 }
 
 .black:hover{
-    background-color: #817E7D;
+    background-image: linear-gradient(to right, #817E7D, #94949c, #817E7D);
 }
 
 .white-drag-over{
@@ -178,5 +189,5 @@ body{
 }
 
 .moves{
-    background-color: #65b886;
+    background-image: linear-gradient(to right, #89ca94, #78927d, #5a7e61);
 } 

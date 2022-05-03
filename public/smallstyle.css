@@ -1,46 +1,103 @@
-
+/*
 header{
-    
+    display:inline-block;
     background-image: linear-gradient(to bottom, #030000, #252323);
+    width:100%;
+}*/
+
+.main-div{
+    position:relative;
+    background-image: linear-gradient(to top, #030000, #252323);
+    width:100%;
+    max-width:100%;
 }
 
-header>h1{
-    vertical-align:center;
+.header-div{
+    vertical-align:middle;
+   /* background-image: linear-gradient(to top, #030000, #252323);*/
+    height:10%;
+    z-index: 1;
+    max-width:100%;
+}
+
+h1{
+    vertical-align:middle;
     text-align: center;
     align-self: start;
-    color:blanchedalmond
+    color:blanchedalmond;
+    max-width:100%;
+}
+
+.sub-header{
+  /*  background-image: linear-gradient(to top, #030000, #252323);*/
+    width:auto;
+    height: 50%;
+    top:65%;
+    position:absolute;
+    z-index: 24;
+    max-width:100%;
+}
+
+.button{
+    vertical-align: middle;
+    padding-left: 10px;
+    margin-left: 10px;
+    color: black;
+    background-color: darkgray;
+    height: 50%;
+    width: 100%;
+    overflow: hidden;
+    max-width:100%;
+}
+
+.rounded-corners{
+    border-radius: 15px;
+}
+
+.status{
+    left:40%;
+    width:100%;
+    z-index: 1;
+    max-width:100%;
 }
 
 .paragraph{
     vertical-align: middle;
     text-align: center;
     color:darkgray;
-    size: 20px;
     font-size: 25px;
     padding-bottom: 5px;
+    width:100%;
+    height: 5%;
 }
 
 html{
     height: 100%;
+    max-width:100%;
 }
 body{
     background-image: linear-gradient(to right, #4707f8, #0e034b, #4507d6);
+    max-width:100%;
+    width:auto
 }
 
-.buttoncontainer{
-    display:flexbox;
+.notify{
+    vertical-align: middle;
+    position:absolute;
+    top: 45%;
+    left: 50%;
+    -webkit-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%); 
+    z-index: 10;
+    display: none;
 }
 
-.button{
-    min-height: 20px;
-    min-width: 30px;
-    padding-top: 2px;
+.checkmate{
+    vertical-align: middle;
     text-align: center;
-    color: black;
-    background-color: darkgray;
-    height: 20px;
-    width: 30px;
-    overflow: hidden;
+    font-size: 36px;
+    font-weight: 900;
+    color: red;
 }
 
 .Chess-Board {
@@ -52,7 +109,8 @@ body{
     -webkit-transform: translate(-50%, -50%);
     transform: translate(-50%, -50%); 
     height: 75%;
-    aspect-ratio: 1/1;
+    z-index: 1;
+ /*   aspect-ratio: 1/1;*/
     background-color: transparent;
 }
 
@@ -67,6 +125,7 @@ body{
     align-items: center;
     aspect-ratio: 1/1;
     background-color: transparent;
+    z-index: 1;
 }
 
 .black{
@@ -79,6 +138,7 @@ body{
     justify-content: center;
     align-items: center;
     aspect-ratio: 1/1;
+    z-index: 1;
 }
 
 .white{
@@ -91,6 +151,7 @@ body{
     justify-content: center;
     align-items: center;
     aspect-ratio: 1/1;
+    z-index: 1;
 }
 
 .lightpawn{

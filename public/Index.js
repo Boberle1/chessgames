@@ -7,6 +7,8 @@ let board = document.getElementById('cb');
 let Square = document.getElementById("11");
 let home = document.getElementById("11");
 let movesbutton = document.getElementById('moves');
+let checkalert = document.getElementById('ny');
+let innercheckalert = document.getElementById('cm');
 let availablemoves = true;
 let lastspot = home;
 let chesspiecehome = home;
@@ -15,7 +17,9 @@ let focusleave = Square;
 let chesspiece = null;
 let item = 1;
 let whitemoves = [];
+let whitedirectionalmoves = [];
 let blackmoves = [];
+let blackdirectionalmoves = [];
 let blackonboard = [];
 let whiteonboard = [];
 let blackoffboard = [];
@@ -29,6 +33,13 @@ let firstconnection = false;
 let Opponent = "Person";
 let status = document.getElementById('p');
 let check = false;
+let numofcheckmoves = 0;
+
+//index in off theoretical move horizontal array in Moves.directions array...
+let theomovehor = 8;
+//index in off theoretical move diagnal array in Moves.directions array...
+let theomovedia = 9;
+let FirstEight = 3;
 
 console.log("We are in the right one!!!");
 
@@ -134,6 +145,134 @@ function Fillboardsquaresarray()
     }
 }
 Fillboardsquaresarray();
+
+class MyAvailableMoves
+{
+    piece = null;
+    moves = [];
+    MyAvailabalMoves(elem, moves)
+    {
+        this.piece = elem;
+        this.moves = moves;
+    }
+}
+
+let MyMoves = [];
+
+class MyAvailableCheckMoves 
+{
+    piece = null;
+    move = [];
+    
+    AddMove(elem, spot)
+    {
+        console.log("Adding piece: " + elem + " to spot: " + spot + " in AddMove()");
+        this.piece = elem;
+        this.move.push(spot);
+    }
+
+    ClearMoves()
+    {
+        this.move = [];
+    }
+
+    IsValidInCheckMove(spot)
+    {
+        console.log("MyAvailableCheckMoves::IsValidMove();;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;");
+        for(let i = 0; i < this.move.length; ++i)
+        {
+            console.log(this.move[i] + " == " + spot);
+            if(this.move[i] == spot) return true;
+        }
+        return false;
+    }
+
+    LightMoves()
+    {
+        for(let i = 0; i < this.move.length; ++i)
+        {
+            document.getElementById(this.move[i]).classList.add('moves');
+        }
+    }
+
+    MovesOffandClear()
+    {
+        this.MovesOff();
+        this.ClearMoves();
+    }
+
+    MovesOff()
+    {
+        for(let i = 0; i < this.move.length; ++i) document.getElementById(this.move[i]).classList.remove('moves');
+    }
+    
+    IsMyPiece(id)
+    {
+        if(id == this.piece) return true;
+
+        return false;
+    }
+}
+
+let MyInCheckMovesArray = [];
+
+function IsValidInCheckPiece(elem)
+{
+    for(let i = 0; i < MyInCheckMovesArray.length; ++i)
+    {
+        console.log("IsValidInCheckPiec(elem)LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL");
+        console.log(MyInCheckMovesArray[i].piece + " == " + elem.children.item(0).id)
+        if(MyInCheckMovesArray[i].piece == elem.children.item(0).id)
+        {
+            if(availablemoves)
+            {
+                MyInCheckMovesArray[i].LightMoves();
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
+//while in check make sure this piece is a valid piece to move and the spot its moving to will
+//block the opponents piece from checking the king...
+function Validate_Piece_spot(spot, piece)
+{
+    for(let i = 0; i < MyInCheckMovesArray.length; ++i)
+    {
+        console.log("Validate_Piece_spot(piece)LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL");
+        console.log(MyInCheckMovesArray[i].piece + " == " + piece);
+        if(MyInCheckMovesArray[i].piece == piece)
+        {
+            if(MyInCheckMovesArray[i].IsValidInCheckMove(spot))
+            {
+                if(availablemoves) MyInCheckMovesArray[i].LightMoves();
+                return true;
+            }
+        }
+    }
+}
+
+function ClearCheckMoves()
+{
+    for(let i = 0; i < MyInCheckMovesArray.length; ++i)
+    {
+        MyInCheckMovesArray[i].MovesOffandClear();
+    }
+}
+
+class OpposingMoves
+{
+    piece = null;
+    moves = [];
+    OpposingMoves(elem, moves)
+    {
+        this.piece = elem;
+        this.moves = moves;
+    }
+}
+
+let OpposingMovesArray = [];
 
 class playerinfo
 {
@@ -256,37 +395,25 @@ function switchpiece(elem, h)
     elem.children.item(0).children.item(0).removeChild(child);
     let image = document.createElement('img');
     image.src = path
- //   console.log("path: " + path);
     image.ariaLabel = child.ariaLabel;
     elem.children.item(0).children.item(0).appendChild(image);
 }
 
 window.addEventListener('resize', (e) => {
     console.log("Entered window addevent listener :::::::::::::::::::::::::::::::::::::::");
-    
-    let buttonh = (window.innerHeight * .03);
-    let buttonindex = buttonh.toString().indexOf('.');
-    if(buttonindex == -1) buttonindex = buttonh.toString().length
-    movesbutton.style.height = buttonh.toString().substr(0, buttonindex) + 'px';
-    let buttonw = (window.innerWidth * .05);
-    buttonindex = buttonw.toString().indexOf('.');
-    if(buttonindex == -1) buttonindex = buttonw.toString().length
-    movesbutton.style.width = buttonw.toString().substr(0, buttonindex) + 'px';
 
     let h = (.75 * window.innerHeight) / 8;
     h = parseInt(h.toString().substr(0, 2));
-    console.log("h: " + h);
     let w = h;
     let total = h * 12;
-    h -= 2;
     console.log("total: " + total);
-    board.style.width = total.toString() + 'px';
     total = (h + 2) * 8;
     board.style.height = total.toString() + 'px';
+    total = (h + 2) * 12;
+    board.style.width = total.toString() + 'px';
     for(let i = 0; i < boardsquares.length; ++i){
         boardsquares[i].style.height = h.toString() + 'px';
         boardsquares[i].style.width = h.toString() + 'px';
-//        console.log("boardsquares[i].height" + boardsquares[i].offsetHeight);
         if(boardsquares[i].children.length)
         {
             switchpiece(boardsquares[i], h - 2);
@@ -310,6 +437,7 @@ window.addEventListener('resize', (e) => {
             switchpiece(leftsideboard[i], h - 2);
         }
     }
+    //RealignStatus();
     console.log("Exited window addevent listener :::::::::::::::::::::::::::::::::::::::");
 });
 
@@ -321,20 +449,52 @@ function GetApposingTeamMoves(team)
     return whitemoves;
 }
 
+function GetTeamonBoard(team)
+{
+    if(team === 'light')
+    return whiteonboard;
+
+    return blackonboard;
+}
+
+function GetNewQueenID(array, team)
+{
+    let id = 'dq';
+    if(team === 'light')
+    id = 'lq';
+    let count = 0;
+    for(let i = 0; i < array.length; ++i)
+    {
+        if(array[i].children.item(0).id.substr(0, 2) == id) ++count;
+    }
+
+    if(!count) return id;
+    return id + count.toString();
+}
+
 function setaside(array, piece)
 {
     for(let i = 0; i < array.length; ++i)
     {
-        console.log(array[i].children.length);
         if(!array[i].children.length)
         {
             array[i].appendChild(piece);
             return;
         }
     }
-    console.log("array");
-    console.log(array);
-    console.log("setaside function with paramater array is full!>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+}
+
+function RemoveItemMyInCheckArray(id)
+{
+    for(let i = 0; MyInCheckMovesArray.length; ++i)
+    {
+        if(MyInCheckMovesArray[i].IsMyPiece(id))
+        {
+            console.log("Removing Item from MyInCheckMovesArray!!!!!");
+            MyInCheckMovesArray[i].splice(i, 1);
+            return;
+        }
+    }
 }
 
 function RemoveFromBoard(elem)
@@ -342,47 +502,85 @@ function RemoveFromBoard(elem)
     if(elem.id === 'lt')
     {
         whiteteam.push(elem);
-        console.log('white*****************');
-        console.log(whiteonboard);
-        console.log(elem);
         for(let i = 0; i < whiteonboard.length; ++i)
         {
-            console.log("Index: " + i + " " + whiteonboard[i].children.item(0).id + " " + elem.children.item(0).id);
             if(whiteonboard[i].children.item(0).id == elem.children.item(0).id)
             {
-                console.log("ENTERE ARRAYYYYY!!!" + whiteonboard[i].children.item(0).id + " " + elem.children.item(0).id)
                 whiteonboard.splice(i, 1);
                 elem.parentElement.removeChild(elem);
                 whiteoffboard.push(elem);
-                if(blackbottom) setaside(rightsideboard, elem);
-                else setaside(leftsideboard, elem);
-                console.log(whiteonboard);
-                return;
             }
         }
         console.log(whiteonboard);
+        if(blackbottom)
+        {
+            for(let i = 0; i < OpponentsPieces.length; ++i)
+            {
+                if(OpponentsPieces[i].pieceid == elem.children.item(0).id) 
+                {
+                    OpponentsPieces.splice(i, 1);
+                    break;
+                }
+            }
+            setaside(rightsideboard, elem);
+            return;
+        }
+        else
+        {
+            for(let i = 0; i < MYpieces.length; ++i)
+            {
+                if(MYpieces[i].pieceid == elem.children.item(0).id) 
+                {
+                    MYpieces.splice(i, 1);
+                    break;
+                }
+            }
+            RemoveItemMyInCheckArray(elem.children.item(0).id);
+            setaside(leftsideboard, elem);
+            return;
+        }
     }
     else{
         blackteam.push(elem);
-        console.log('black*****************');
-        console.log(blackonboard);
-        console.log(elem);
         for(let i = 0; i < blackonboard.length; ++i)
         {
-            console.log("Index: " + i + " " + blackonboard[i].children.item(0).id + " " + elem.children.item(0).id);
             if(blackonboard[i].children.item(0).id == elem.children.item(0).id)
             {
-                console.log("ENTERE ARRAYYYYY!!!" + blackonboard[i].children.item(0).id + " " + elem.children.item(0).id);
                 blackonboard.splice(i, 1);
                 elem.parentElement.removeChild(elem);
                 blackoffboard.push(elem);
                 if(blackbottom) setaside(leftsideboard, elem);
                 else setaside(rightsideboard, elem);
-                console.log(blackonboard);
                 return;
             }
         }
-        console.log(blackonboard);
+        if(blackbottom)
+        {
+            for(let i = 0; i < MYpieces.length; ++i)
+            {
+                if(MYpieces[i].pieceid == elem.children.item(0).id) 
+                {
+                    MYpieces.splice(i, 1);
+                    break;
+                }
+            }
+            RemoveItemMyInCheckArray(elem.children.item(0).id);
+            setaside(leftsideboard, elem);
+            return;
+        }
+        else
+        {
+            for(let i = 0; i < OpponentsPieces.length; ++i)
+            {
+                if(OpponentsPieces[i].pieceid == elem.children.item(0).id) 
+                {
+                    OpponentsPieces.splice(i, 1);
+                    break;
+                }
+            }
+            setaside(rightsideboard, elem);
+            return;
+        }
     }
 }
 
@@ -601,7 +799,7 @@ socket.on('leaveroom', (message) => {
 
 socket.on('enterroom', (Obj) => {
     Opponent = Obj.Name;
-    alert(Obj.Name);
+    alert(Obj.sentence);
     return;
 });
 
@@ -613,6 +811,14 @@ socket.on('roomfull', (message) => {
 
 if(socket.connected)
 {
+    let width = status.style.width.substr(0, width.length - 2);
+    console.log("Width************************************************************************************");
+    console.log(width)
+    let padding = (window.innerWidth/2) - (parseInt(width)/2);
+    status.style.paddingRight = padding;
+    status.style.marginRight = padding;
+    movesbutton.style.height = '20px';
+    movesbutton.style.width = '30px';
     document.getElementById('title').innerText = 'Joined Room: ' + Player.room;
     alert("You connected to room " + Player.room);
 }
@@ -627,6 +833,10 @@ class Moves{
     hr = [];
     vd = [];
     hl = [];
+    theorticalmoveshor = [];
+    theorticalmovesdia = [];
+    castlemoves = [];
+    directions = [];
     king = false;
     queen = false;
     bishop = false;
@@ -660,16 +870,34 @@ class Moves{
             spot.classList.remove('moves');
         }
         this.moves = [];
+        for(let i = 0; i < this.directions.length; ++i) this.directions[i] = [];
         
+    }
+
+    InitDirections()
+    {
+        this.directions.push(this.lu);
+        this.directions.push(this.ru);
+        this.directions.push(this.ld);
+        this.directions.push(this.rd);
+        this.directions.push(this.vu);
+        this.directions.push(this.hr);
+        this.directions.push(this.vd);
+        this.directions.push(this.hl);
+        this.directions.push(this.theorticalmoveshor);
+        this.directions.push(this.theorticalmovesdia);
+        this.directions.push(this.castlemoves);
     }
 
     SetKing(k)
     {
+        this.InitDirections();
         this.king = k;
     }
 
     SetPiece(num)
     {
+        this.InitDirections();
         switch(num)
         {
             case 1: this.king = true; return;
@@ -682,23 +910,75 @@ class Moves{
         console.log("The number passed as paramater in Moves.SetPiece did not match! Paramater is: " + num);
     }
 
+    //Fill first element in the first 8 arrays the position the piece is in to start with...
+    FillFirstPosition(id)
+    {
+        for(let i = 0; i < this.directions.length - FirstEight; ++i)
+        {
+            this.directions[i].push(id);
+        }
+    }
+
+    AddTheoreticalMoveDia(id)
+    {
+        this.directions[theomovedia].push(id);
+    }
+
+    AddTheoreticalMoveHor(id)
+    {
+        this.directions[theomovehor].push(id);
+    }
+
+    AddCastleMove(id)
+    {
+        this.directions[this.directions.length - 1].push(id);
+    }
+
+    AddMovesForPawn(id)
+    {
+        for(let i = 0; i < this.directions.length - FirstEight; ++i)
+        {
+            if(this.directions[i].length < 2)
+            {
+                this.directions[i].push(id);
+                return;
+            }
+        }
+        console.error("Pawn will be missing available moves in AddMovesForPawn in Moves obj... directions array is full...");
+    }
+
     IsKing()
     {
         return this.king;
     }
 
+    IsQueen()
+    {
+        return this.queen;
+    }
+
+    IsRook()
+    {
+        return this.rook;
+    }
+
     IsKnight()
     {
-        return knight;
+        return this.knight;
     }
 
     IsPawn()
     {
-        return pawn;
+        return this.pawn;
+    }
+
+    IsBishop()
+    {
+        return this.bishop
     }
 }
 
-class diagnalmove extends Moves{
+class Dia_vh_Moves extends Moves{
     onemove = false;
     getDiamoves(spot, team, kingmove, moves_available, theoretical)
     {
@@ -720,7 +1000,9 @@ class diagnalmove extends Moves{
         col = parseInt(spot.toString().slice(1,2));
         for(let iteration = 1; iteration < 5; ++iteration)
         {
+            console.log("right before this.directions in getDaimoves::::::::::::::::::::::::::::::::::::::::");
             this.onemove = false;
+            this.directions[iteration - 1].push(spot);
             this.DiaMoves(this.Rowincrement(row, iteration), this.Colincrememt(col, iteration), team, kingmove, moves_available, theoretical, iteration);
         }
     }
@@ -748,6 +1030,7 @@ class diagnalmove extends Moves{
                     {
                         next.classList.add('moves');
                     }
+                    this.directions[this.directions.length - 2].push(next.id);
                     this.moves.push(next.id);
                     return;
                 }
@@ -771,6 +1054,7 @@ class diagnalmove extends Moves{
                 next.classList.add('moves');
             }
 
+            this.directions[iteration - 1].push(next.id);
             this.moves.push(next.id);
             if(theoretical && (next.children.item(0).children.item(0).id === 'lk' || theoretical && next.children.item(0).children.item(0).id === 'dk'))
             {
@@ -795,6 +1079,8 @@ class diagnalmove extends Moves{
         {
             next.classList.add('moves');
         }
+
+        this.directions[iteration - 1].push(next.id);
         this.moves.push(next.id);
         if(!kingmove)
         {
@@ -865,12 +1151,8 @@ class diagnalmove extends Moves{
             return true;
         }
     }
-}
 
-class HorizontalMove extends diagnalmove{
-
-    onemove = false;
-    getHormoves(spot, team, kingmove = false, moves_available, theoretical)
+    Get_HV_Moves(spot, team, kingmove = false, moves_available, theoretical)
     {
         if(spot === null)
         {
@@ -888,8 +1170,258 @@ class HorizontalMove extends diagnalmove{
         this.onemove = false;
         for(let iteration = 1; iteration < 5; ++iteration)
         {
+            console.log("right before this.directions in getHormoves::::::::::::::::::::::::::::::::::::::::");
             this.onemove = false;
-            this.Moves(this.incrementrow(row, iteration), this.incrementcol(col, iteration), team, kingmove, moves_available, theoretical, iteration);
+            this.directions[iteration + 3].push(spot);
+            this.HV_Moves(this.increment_hv_row(row, iteration), this.incremen_th_vcol(col, iteration), team, kingmove, moves_available, theoretical, iteration);
+        }
+        if(kingmove && !theoretical)
+        {
+            this.CastleMove(row, col, team, moves_available);
+        }
+        return;
+    }
+
+    CastleMove(row, col, team, moves_available)
+    {
+        let decrease = 2;
+        let increase = 1;
+        if(team == 'dark' || team == 'black')
+        {
+            if(Darkteam.king) return;
+            if(!Darkteam.rook1) this.CastleCheck(row, this.incremen_th_vcol(col, decrease), decrease, moves_available);
+            if(!Darkteam.rook2) this.CastleCheck(row, this.incremen_th_vcol(col, increase), increase, moves_available);
+            return;
+        }
+        if(team == 'white' || team == 'light')
+        {
+            if(Lightteam.king) return;
+            if(!Lightteam.rook1) this.CastleCheck(row, this.incremen_th_vcol(col, decrease), decrease, moves_available);
+            if(!Lightteam.rook2) this.CastleCheck(row, this.incremen_th_vcol(col, increase), increase, moves_available);
+            return;
+        }
+    }
+
+    CastleCheck(row, col, iter, moves_available)
+    {
+        if(this.check_h_v(row, col)) return;
+        let next =  document.getElementById(row.toString() + col.toString());
+        console.log('row, col');
+        console.log(row + col);
+        if(col.toString() === '8' || col.toString() === '1')
+        {
+            if(moves_available) next.classList.add('moves');
+            this.directions[this.directions.length - 1].push(next.id);
+            this.moves.push(next.id);
+            return;
+        }
+        if(next.children.length) return;
+        this.CastleCheck(row, this.incremen_th_vcol(col, iter), iter)
+    }
+
+    HV_Moves(row, col, team, kingmove, moves_available, theoretical, iteration)
+    {
+        if(!this.check_h_v(row, col, iteration))
+        {
+            return;
+        }
+        let next = document.getElementById(row.toString() + col.toString());
+        if(next === null)
+        {
+            console.log("Next is null in diagnalRU!");
+            return;
+        }
+        if(next.children.length)
+        {
+            if(next.children.item(0).children.item(0).ariaLabel === team)
+            {
+                if(theoretical && !this.onemove)
+                {
+                    this.onemove = true;
+                    if(moves_available)
+                    {
+                        next.classList.add('moves');
+                    }
+                    this.directions[this.directions.length - 3].push(next.id);
+                    this.moves.push(next.id);
+                    return;
+                }
+                console.log("You hit the return because ths.onemove is used and necessary^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+                return;
+            }
+            if(kingmove)
+            {
+                let opposition = GetApposingTeamMoves(team);
+                console.log(opposition);
+                for(let i = 0; i < opposition.length; ++i)
+                {
+                    if(opposition[i] === next.id)
+                    return;
+                }
+            }
+            if(moves_available)
+            {
+                next.classList.add('moves');
+            }
+
+            console.log("right before the first this.direction.push(" + next.id +")");
+            this.directions[iteration + 3].push(next.id);
+            this.moves.push(next.id);
+
+            if(theoretical && next.children.item(0).children.item(0).id === 'lk' || theoretical && next.children.item(0).children.item(0).id === 'dk')
+            {
+                if(!kingmove)
+                {
+                    this.HV_Moves(this.increment_hv_row(row, iteration), this.incremen_th_vcol(col, iteration), team, kingmove, moves_available, theoretical, iteration);
+                }
+                return;
+            }
+            return
+        }
+        if(kingmove)
+        {
+            let opposition = GetApposingTeamMoves(team);
+            console.log("diaglu opposition");
+            console.log(opposition);
+            for(let i = 0; i < opposition.length; ++i)
+            {
+                if(opposition[i] === next.id)
+                return;
+            }
+        }
+        if(moves_available)
+        {
+            next.classList.add('moves');
+        }
+
+        console.log("right before the second this.direction.push(" + next.id +")");
+        this.directions[iteration + 3].push(next.id);
+        this.moves.push(next.id);
+        if(!kingmove)
+        {
+            this.HV_Moves(this.increment_hv_row(row, iteration), this.incremen_th_vcol(col, iteration), team, kingmove, moves_available, theoretical, iteration);
+        }
+    }
+
+    increment_hv_row(row, iter)
+    {
+        console.log("This is a horizontal func increment row!!!");
+        switch(iter)
+        {
+            case 1: return row;
+            case 2: return row;
+            case 3: return row + 1;
+            case 4: return row - 1;
+            default: return row;
+        }
+    }
+
+    incremen_th_vcol(col, iter)
+    {
+        console.log("This is a horizontal func increment col!!!");
+        switch(iter)
+        {
+            case 1: return col + 1;
+            case 2: return col - 1;
+            case 3: return col;
+            case 4: return col;
+            default: return col;
+        }
+    }
+    
+    check_h_v(row, col, iteration)
+    {
+        let min = 1;
+        let max = 8;
+        if(iteration === 1)
+        {
+            if(row > max || row < min)
+            {
+                console.log("col is greater than max or less than min in Down HorizontalMoves! x is: " + col);
+                return false;
+            }
+
+            if(col > max)
+            {
+                return false;
+            }
+
+            return true;
+        }
+        if(iteration === 2)
+        {
+            if(row > max || row < min)
+            {
+                console.log("col is greater than max or less than min in Down HorizontalMoves! x is: " + col);
+                return false;
+            }
+
+            if(col < min)
+            {
+                return false;
+            }
+
+            return true;
+        }
+        if(iteration === 3)
+        {
+            if(col > max || col < min)
+            {
+                console.log("col is greater than max or less than min in Down HorizontalMoves! x is: " + col);
+                return false;
+            }
+
+            if(row > max)
+            {
+                return false;
+            }
+
+            return true;
+        }
+        if(iteration === 4)
+        {
+            if(col > max || col < min)
+            {
+                console.log("col is greater than max or less than min in Down HorizontalMoves! x is: " + col);
+                return false;
+            }
+
+            if(row < min)
+            {
+                return false;
+            }
+
+            return true;
+        }
+    }
+}
+
+/*
+class HorizontalMove extends diagnalmove{
+
+    onemove = false;
+    Get_HV_Moves(spot, team, kingmove = false, moves_available, theoretical)
+    {
+        if(spot === null)
+        {
+            console.log("Error spot passed to getmoves is null");
+            return;
+        }
+        if(team !== 'light' && team !== 'dark')
+        {
+            console.log("team in getmoves is not equal to light or dark! team is: " + team);
+            return;
+        }
+
+        let row = parseInt(spot.toString().slice(0,1));
+        let col = parseInt(spot.toString().slice(1,2));
+        this.onemove = false;
+        for(let iteration = 1; iteration < 5; ++iteration)
+        {
+            console.log("right before this.directions in getHormoves::::::::::::::::::::::::::::::::::::::::");
+            this.onemove = false;
+            this.directions[iteration + 3].push(spot);
+            this.HV_Moves(this.increment_hv_row(row, iteration), this.incremen_th_vcol(col, iteration), team, kingmove, moves_available, theoretical, iteration);
         }
         if(kingmove && !theoretical)
         {
@@ -905,22 +1437,22 @@ class HorizontalMove extends diagnalmove{
         if(team == 'dark' || team == 'black')
         {
             if(Darkteam.king) return;
-            if(!Darkteam.rook1) this.CastleCheck(row, this.incrementcol(col, decrease), decrease);
-            if(!Darkteam.rook2) this.CastleCheck(row, this.incrementcol(col, increase), increase);
+            if(!Darkteam.rook1) this.CastleCheck(row, this.incremen_th_vcol(col, decrease), decrease);
+            if(!Darkteam.rook2) this.CastleCheck(row, this.incremen_th_vcol(col, increase), increase);
             return;
         }
         if(team == 'white' || team == 'light')
         {
             if(Lightteam.king) return;
-            if(!Lightteam.rook1) this.CastleCheck(row, this.incrementcol(col, decrease), decrease);
-            if(!Lightteam.rook2) this.CastleCheck(row, this.incrementcol(col, increase), increase);
+            if(!Lightteam.rook1) this.CastleCheck(row, this.incremen_th_vcol(col, decrease), decrease);
+            if(!Lightteam.rook2) this.CastleCheck(row, this.incremen_th_vcol(col, increase), increase);
             return;
         }
     }
 
     CastleCheck(row, col, iter)
     {
-        if(this.check(row, col)) return;
+        if(this.check_h_v(row, col)) return;
         let next =  document.getElementById(row.toString() + col.toString());
         console.log('row, col');
         console.log(row + col);
@@ -931,68 +1463,12 @@ class HorizontalMove extends diagnalmove{
             return;
         }
         if(next.children.length) return;
-        this.CastleCheck(row, this.incrementcol(col, iter), iter)
+        this.CastleCheck(row, this.incremen_th_vcol(col, iter), iter)
     }
-/*
-    SomeMoves(row, col, team, kingmove, moves_available, theoretical, iteration)
+
+    HV_Moves(row, col, team, kingmove, moves_available, theoretical, iteration)
     {
-        let findpiece = false;
-        if(!this.check(row, col, iteration))
-        {
-            return;
-        }
-
-        let next = document.getElementById(row.toString() + col.toString());
-        if(next === null)
-        {
-            console.log("Next is null in diagnalRU!");
-            return;
-        }
-
-        if(next.children.length)
-        {
-            findpiece = true;
-            if(next.children.item(0).children.item(0).ariaLabel === team)
-            {
-                if(theoretical && !this.onemove)
-                {
-                    this.onemove = true;
-                    if(moves_available)
-                    {
-                        next.classList.add('moves');
-                    }
-                    this.moves.push(next.id);
-                    return;
-                }
-                return;
-            }
-        }
-
-        if(kingmove)
-        {
-            let opposition = GetApposingTeamMoves(team);
-            console.log("diaglu opposition");
-            console.log(opposition);
-            for(let i = 0; i < opposition.length; ++i)
-            {
-                if(opposition[i] === next.id)
-                return;
-            }
-        }
-
-        if(moves_available)
-        {
-            next.classList.add('moves');
-        }
-        this.moves.push(next.id);
-
-        if(!findpiece && !kingmove)
-        this.Moves(this.incrementrow(row, iteration), this.incrementcol(col, iteration), team, kingmove, moves_available, theoretical, iteration);
-    }
-*/
-    Moves(row, col, team, kingmove, moves_available, theoretical, iteration)
-    {
-        if(!this.check(row, col, iteration))
+        if(!this.check_h_v(row, col, iteration))
         {
             return;
         }
@@ -1033,13 +1509,16 @@ class HorizontalMove extends diagnalmove{
             {
                 next.classList.add('moves');
             }
+
+            console.log("right before the first this.direction.push(" + next.id +")");
+            this.directions[iteration + 3].push(next.id);
             this.moves.push(next.id);
 
             if(theoretical && next.children.item(0).children.item(0).id === 'lk' || theoretical && next.children.item(0).children.item(0).id === 'dk')
             {
                 if(!kingmove)
                 {
-                    this.Moves(this.incrementrow(row, iteration), this.incrementcol(col, iteration), team, kingmove, moves_available, theoretical, iteration);
+                    this.HV_Moves(this.increment_hv_row(row, iteration), this.incremen_th_vcol(col, iteration), team, kingmove, moves_available, theoretical, iteration);
                 }
                 return;
             }
@@ -1060,14 +1539,17 @@ class HorizontalMove extends diagnalmove{
         {
             next.classList.add('moves');
         }
+
+        console.log("right before the second this.direction.push(" + next.id +")");
+        this.directions[iteration + 3].push(next.id);
         this.moves.push(next.id);
         if(!kingmove)
         {
-            this.Moves(this.incrementrow(row, iteration), this.incrementcol(col, iteration), team, kingmove, moves_available, theoretical, iteration);
+            this.HV_Moves(this.increment_hv_row(row, iteration), this.incremen_th_vcol(col, iteration), team, kingmove, moves_available, theoretical, iteration);
         }
     }
 
-    incrementrow(row, iter)
+    increment_hv_row(row, iter)
     {
         console.log("This is a horizontal func increment row!!!");
         switch(iter)
@@ -1080,9 +1562,9 @@ class HorizontalMove extends diagnalmove{
         }
     }
 
-    incrementcol(col, iter)
+    incremen_th_vcol(col, iter)
     {
-        console.log("This is a horizontal func increment row!!!");
+        console.log("This is a horizontal func increment col!!!");
         switch(iter)
         {
             case 1: return col + 1;
@@ -1093,7 +1575,7 @@ class HorizontalMove extends diagnalmove{
         }
     }
     
-    check(row, col, iteration)
+    check_h_v(row, col, iteration)
     {
         let min = 1;
         let max = 8;
@@ -1125,7 +1607,6 @@ class HorizontalMove extends diagnalmove{
                 return false;
             }
 
-            return true;
             return true;
         }
         if(iteration === 3)
@@ -1160,8 +1641,9 @@ class HorizontalMove extends diagnalmove{
         }
     }
 }
-
+*/
 class Knight extends Moves{
+    checkmoves = 0
     GetMoves(spot, team, moves_available = true, theoretical = false)
     {
         if(spot === null)
@@ -1181,6 +1663,11 @@ class Knight extends Moves{
         let originrow = row;
         let origincol = col;
 
+        for(let i = 0; i < this.directions.length - 3; ++i) this.directions[i].push(spot);
+        console.log("right before knight push moves:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
+        this.directions[0].push(spot);
+        console.log("right after knight push moves:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
+        this.checkmoves = 0;
         this.KnightMove(row - 1, col - 2, team, moves_available, theoretical);
         this.KnightMove(row -2, col - 1, team, moves_available, theoretical);
         this.KnightMove(row + 1, col - 2, team, moves_available, theoretical);
@@ -1197,11 +1684,13 @@ class Knight extends Moves{
         let max = 8;
         if(row > max || row < min)
         {
+            ++this.checkmoves;
             return;
         }
 
         if(col > max || col < min)
         {
+            ++this.checkmoves;
             return;
         }
 
@@ -1222,6 +1711,7 @@ class Knight extends Moves{
                          next.classList.add('moves');
                     }
                     this.moves.push(next.id);
+                    this.directions[this.directions.length - 1].push(next.id);
                     return;
                 }
                 return;
@@ -1232,6 +1722,8 @@ class Knight extends Moves{
             next.classList.add('moves');
         }
         this.moves.push(next.id);
+        this.directions[this.checkmoves].push(next.id);
+        ++this.checkmoves
     }
 }
 
@@ -1290,6 +1782,7 @@ class Pawn extends Moves{
             return;
         }
 
+        this.FillFirstPosition(spot);
         let row = parseInt(spot.toString().slice(0,1));
         let col = parseInt(spot.toString().slice(1,2));
         let originrow = row;
@@ -1408,6 +1901,7 @@ class Pawn extends Moves{
                 {
                     forward.classList.add('moves');
                 }
+                this.AddMovesForPawn(forward.id);
                 this.moves.push(forward.id);
                 return true;
             }
@@ -1433,30 +1927,13 @@ class Pawn extends Moves{
                 {
                     diag.classList.add('moves');
                 }
+                this.AddTheoreticalMoveDia(diag.id);
                 this.moves.push(diag.id);
                 return;
             }
 
             if(diag.children.length)
             {
-                /*
-                if(theoretical)
-                {
-                    console.log(diag);
-                    console.log('diag.ariaLabel: ' + diag.children.item(0).children.item(0).ariaLabel + ' team: ' + team);
-                    if(diag.children.item(0).children.item(0).ariaLabel === team)
-                    {
-                        console.log("entered movediag children^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
-                        if(moves_available)
-                        {
-                            diag.classList.add('moves');
-                        }
-                        this.moves.push(diag.id);
-                        return;
-                    }
-                    return;
-                }
-                */
                 if(diag.children.item(0).children.item(0).ariaLabel !== team)
                 {
                     console.log('row: ' + row + ' col: ' + col);
@@ -1465,20 +1942,14 @@ class Pawn extends Moves{
                     {
                         diag.classList.add('moves');
                     }
+                    console.log("right before pawn push moves:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
+                    this.directions[0].push(diag.id);
+                    console.log("right after knight push moves:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
+                    this.AddMovesForPawn(diag.id);
                     this.moves.push(diag.id);
                 }
                 return;
             }
-            /*
-            if(theoretical)
-            {
-                if(moves_available)
-                {
-                    diag.classList.add('moves');
-                }
-                this.moves.push(diag.id);
-            }
-            */
         }
     }
 
@@ -1500,12 +1971,12 @@ class Pawn extends Moves{
     }
 }
 
-class King extends HorizontalMove{
+class King extends Dia_vh_Moves{
     GetMoves(spot, team, moves_available = true, theoretical = false)
     {
         this.ClearMoves();
         this.getDiamoves(spot, team, true, moves_available, theoretical);
-        this.getHormoves(spot, team, true, moves_available, theoretical);
+        this.Get_HV_Moves(spot, team, true, moves_available, theoretical);
     }
     clear()
     {
@@ -1513,30 +1984,60 @@ class King extends HorizontalMove{
     }
 }
 
-class Queen extends HorizontalMove{
+class Queen extends Dia_vh_Moves{
     GetMoves(spot, team, moves_available = true, theoretical = false)
     {
         this.ClearMoves();
         this.getDiamoves(spot, team, false, moves_available, theoretical);
-        this.getHormoves(spot, team, false, moves_available, theoretical);
+        this.Get_HV_Moves(spot, team, false, moves_available, theoretical);
     }
 }
 
-class Rook extends HorizontalMove{
+class Rook extends Dia_vh_Moves{
     GetMoves(spot, team, moves_available = true, theoretical = false)
     {
         this.ClearMoves();
-        this.getHormoves(spot, team, false, moves_available, theoretical);
+        this.Get_HV_Moves(spot, team, false, moves_available, theoretical);
     }
 }
 
-class Bishop extends diagnalmove{
+class Bishop extends Dia_vh_Moves{
     GetMoves(spot, team, moves_available = true, theoretical = false)
     {
         this.ClearMoves();
         this.getDiamoves(spot, team, false, moves_available, theoretical);
     }
 }
+
+class BoardPieces
+{
+    pieceid = "";
+    moves = null;
+
+    AddPiece(id, elem)
+    {
+        this.pieceid = id;
+        this.moves = elem;
+    }
+    ClearMoves()
+    {
+        if(!this.moves)
+        {
+            console.log("moves in boardpieces class is null and being called in its Method ClearMoves!");
+            return;
+        }
+        this.moves.ClearMoves();
+    }
+    IsMyPiece(id)
+    {
+        if(id == this.pieceid)return true;
+
+        return false;
+    }
+}
+
+let OpponentsPieces = [];
+let MYpieces = [];
 
 let king = new King();
 king.SetKing(true);
@@ -1569,139 +2070,289 @@ function GetPiece(id)
     console.log('id did not match anything in GetPiece! id is: ' + id);
     return null;
 }
-function GetPieceMoves(elem)
+
+function GetMyInCheckMoveArrayItem(id)
+{
+    for(let i = 0; i < MyInCheckMovesArray.length; ++i)
+    {
+        if(MyInCheckMovesArray[i].IsMyPiece(id)) return MyInCheckMovesArray[i];
+    }
+    return null;
+}
+
+function GetMyPiece(id)
+{
+    for(let i = 0; i < MYpieces.length; ++i)
+    {
+        if(MYpieces[i].IsMyPiece(id)) return MYpieces[i];
+    }
+    return null;
+}
+
+function ClearAllMoves(id)
+{
+    for(let i = 0; i < MYpieces.length; ++i) MYpieces[i].ClearMoves();
+    for(let i = 0; i < OpponentsPieces.length; ++i) OpponentsPieces[i].ClearMoves();
+    ClearMyCheckMoves();
+}
+function GetNewMovesClass(id)
+{
+    if(id == 'darkking' || id == 'lightking')
+    {
+        let item = new King();
+        item.SetKing(true);
+        return item;
+    }
+    if(id == 'darkqueen' || id == 'lightqueen')
+    {
+        let item = new Queen();
+        item.SetPiece(2);
+        return item;
+    }
+    if(id == 'darkrook' || id == 'lightrook')
+    {
+        let item = new Rook();
+        item.SetPiece(5);
+        return item;
+    }
+    if(id == 'darkbishop' || id == 'lightbishop')
+    {
+        let item = new Bishop();
+        item.SetPiece(3);
+        return item;
+    }
+    if(id == 'darkknight' || id == 'lightknight')
+    {
+        let item = new Knight();
+        item.SetPiece(4);
+        return item;
+    }
+    if(id == 'darkpawn' || id == 'lightpawn')
+    {
+        let item = new Pawn();
+        item.SetPiece(6);
+        return item;
+    }
+}
+
+function FindMoves(id, team, showmoves, theoretical)
+{
+    let item = null;
+    let elem = document.getElementById(id).parentElement;
+    console.log("MyPieces::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
+    console.log(MYpieces);
+    console.log("OpponentsPieces:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
+    console.log(OpponentsPieces);
+    if(blackbottom)
+    {
+        if(team == 'dark')
+        {
+            for(let i = 0; i < MYpieces.length; ++i)
+            {
+                if(MYpieces[i].pieceid == id)
+                item = MYpieces[i];
+            }
+        }
+        else
+        {
+            for(let i = 0; i < OpponentsPieces.length; ++i)
+            {
+                if(OpponentsPieces[i].pieceid == id)
+                item = OpponentsPieces[i];
+            }
+        }
+    }
+    else
+    {
+        if(team == 'dark')
+        {
+            for(let i = 0; i < OpponentsPieces.length; ++i)
+            {
+                if(OpponentsPieces[i].pieceid == id)
+                item = OpponentsPieces[i];
+            }
+        }
+        else
+        {
+            for(let i = 0; i < MYpieces.length; ++i)
+            {
+                if(MYpieces[i].pieceid == id)
+                item = MYpieces[i];
+            }
+        }
+    }
+    if(!item)
+    {
+        console.log("Item is null in FindMoves!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        return;
+    }
+
+    console.log("right before GetMoves in FindMoves::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
+    item.moves.ClearMoves();
+    item.moves.GetMoves(elem.parentElement.id, elem.children.item(0).ariaLabel, showmoves, theoretical);
+    if(team == 'dark')
+    {
+        for(let i = 0; i < item.moves.moves.length; ++i)
+        {
+            console.log("what the hell in blackmoves::::::::::::::::::::::::::::::::::::::::::::::::");
+            blackmoves.push(item.moves.moves[i]);
+        }
+    }
+    else
+    {
+        for(let i = 0; i < item.moves.moves.length; ++i)
+        {
+            console.log("what the hell in whitemoves::::::::::::::::::::::::::::::::::::::::::::::::");
+            whitemoves.push(item.moves.moves[i]);
+        }
+    }
+
+    console.log("returning from FindMoves::::::");
+}
+
+function AddToDirectionalMoves(elem, piece, theoretical)
+{
+    console.log("AddToDirectionalMoves().................................................");
+    console.log(piece);
+    console.log(elem.directions);
+    if(theoretical) OpposingMovesArray.push(new OpposingMoves(piece.children.item(0).id, elem.directions));
+    else MyMoves.push(new MyAvailableMoves(piece, elem.directions));
+}
+
+function GetPieceMoves(elem, theoretical)
 {
     if(elem.children.item(0).className === 'lightking' || elem.children.item(0).className === 'darkking')
     {
+        FindMoves(elem.children.item(0).id, elem.children.item(0).ariaLabel, false, theoretical);
+        /*
         king.ClearMoves();
-        king.GetMoves(elem.parentElement.id, elem.children.item(0).ariaLabel, false, true);
+        king.GetMoves(elem.parentElement.id, elem.children.item(0).ariaLabel, false, theoretical);
         if(elem.children.item(0).className === 'lightking')
         {
             for(let i = 0; i < king.moves.length; ++i)
             {
                 whitemoves.push(king.moves[i]);
             }
-            console.log('whiteking moves:');
-            console.log(king.moves);
         }
         else{
             for(let i = 0; i < king.moves.length; ++i)
             {
                 blackmoves.push(king.moves[i]);
             }
-            console.log('blackking moves:');
-            console.log(king.moves);
         }
+        AddToDirectionalMoves(king, elem, theoretical);
+        */
     }
     if(elem.children.item(0).className === 'lightqueen' || elem.children.item(0).className === 'darkqueen')
     {
+        FindMoves(elem.children.item(0).id, elem.children.item(0).ariaLabel, false, theoretical);
+        /*
         queen.ClearMoves();
-        queen.GetMoves(elem.parentElement.id, elem.children.item(0).ariaLabel, false, true);
+        queen.GetMoves(elem.parentElement.id, elem.children.item(0).ariaLabel, false, theoretical);
         if(elem.children.item(0).className === 'lightqueen')
         {
             for(let i = 0; i < queen.moves.length; ++i)
             {
                 whitemoves.push(queen.moves[i]);
             }
-            console.log('whitequeen moves:');
-            console.log(queen.moves);
+            
         }
         else{
             for(let i = 0; i < queen.moves.length; ++i)
             {
                 blackmoves.push(queen.moves[i]);
             }
-            console.log('blackqueen moves:');
-            console.log(queen.moves);
         }
+        AddToDirectionalMoves(queen, elem, theoretical);
+        */
     }
     if(elem.children.item(0).className === 'lightrook' || elem.children.item(0).className === 'darkrook')
     {
+        FindMoves(elem.children.item(0).id, elem.children.item(0).ariaLabel, false, theoretical);
+        /*
         rook.ClearMoves();
-        rook.GetMoves(elem.parentElement.id, elem.children.item(0).ariaLabel, false, true);
+        rook.GetMoves(elem.parentElement.id, elem.children.item(0).ariaLabel, false, theoretical);
         if(elem.children.item(0).className === 'lightrook')
         {
             for(let i = 0; i < rook.moves.length; ++i)
             {
                 whitemoves.push(rook.moves[i]);
             }
-            console.log('whiterook moves:' );
-            console.log(rook.moves);
         }
         else{
             for(let i = 0; i < rook.moves.length; ++i)
             {
                 blackmoves.push(rook.moves[i]);
             }
-            console.log('blackrook moves:');
-            console.log(rook.moves);
         }
+        AddToDirectionalMoves(rook, elem, theoretical);
+        */
     }
     if(elem.children.item(0).className === 'lightbishop' || elem.children.item(0).className === 'darkbishop')
     {
+        FindMoves(elem.children.item(0).id, elem.children.item(0).ariaLabel, false, theoretical);
+        /*
         bishop.ClearMoves();
-        bishop.GetMoves(elem.parentElement.id, elem.children.item(0).ariaLabel, false, true);
+        bishop.GetMoves(elem.parentElement.id, elem.children.item(0).ariaLabel, false, theoretical);
         if(elem.children.item(0).className === 'lightbishop')
         {
             for(let i = 0; i < bishop.moves.length; ++i)
             {
                 whitemoves.push(bishop.moves[i]);
             }
-            console.log('whitebishop moves:' );
-            console.log(bishop.moves);
         }
         else{
             for(let i = 0; i < bishop.moves.length; ++i)
             {
                 blackmoves.push(bishop.moves[i]);
             }
-            console.log('whitebishop moves:');
-            console.log(bishop.moves);
         }
+        AddToDirectionalMoves(bishop, elem, theoretical);
+        */
     }
     if(elem.children.item(0).className === 'lightknight' || elem.children.item(0).className === 'darkknight')
     {
+        FindMoves(elem.children.item(0).id, elem.children.item(0).ariaLabel, false, theoretical);
+        /*
         knight.ClearMoves();
-        knight.GetMoves(elem.parentElement.id, elem.children.item(0).ariaLabel, false, true);
+        knight.GetMoves(elem.parentElement.id, elem.children.item(0).ariaLabel, false, theoretical);
         if(elem.children.item(0).className === 'lightknight')
         {
             for(let i = 0; i < knight.moves.length; ++i)
             {
                 whitemoves.push(knight.moves[i]);
             }
-            console.log('whiteknight moves:');
-            console.log(knight.moves);
         }
         else{
             for(let i = 0; i < knight.moves.length; ++i)
             {
                 blackmoves.push(knight.moves[i]);
             }
-            console.log('blackknight moves:');
-            console.log(knight.moves);
         }
+        AddToDirectionalMoves(knight, elem, theoretical);
+        */
     }
     if(elem.children.item(0).className === 'lightpawn' || elem.children.item(0).className === 'darkpawn')
     {
+        FindMoves(elem.children.item(0).id, elem.children.item(0).ariaLabel, false, theoretical);
+        /*
         pawn.ClearMoves();
-        pawn.GetDiagMoves(elem.parentElement.id, elem.children.item(0).ariaLabel, false, true);
+        pawn.GetDiagMoves(elem.parentElement.id, elem.children.item(0).ariaLabel, false, theoretical);
         if(elem.children.item(0).className === 'lightpawn')
         {
             for(let i = 0; i < pawn.moves.length; ++i)
             {
                 whitemoves.push(pawn.moves[i]);
             }
-            console.log('whitepawn moves:');
-            console.log(pawn.moves);
         }
         else{
             for(let i = 0; i < pawn.moves.length; ++i)
             {
                 blackmoves.push(pawn.moves[i]);
             }
-            console.log('blackpawn moves:');
-            console.log(pawn.moves);
         }
+        AddToDirectionalMoves(pawn, elem, theoretical);
+        */
     }
 }
 
@@ -1709,12 +2360,14 @@ function GetApposingMoves(team)
 {
     whitemoves = [];
     blackmoves = [];
+    whitedirectionalmoves = [];
+    blackdirectionalmoves = [];
     console.log('team: [[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[ ' + team);
     if(team === 'dark')
     {
         for(let i = 0; i < whiteonboard.length; ++i)
         {
-            GetPieceMoves(whiteonboard[i]);
+            GetPieceMoves(whiteonboard[i], true);
         }
         console.log('whitemoves array: ');
         console.log(whitemoves);
@@ -1723,7 +2376,7 @@ function GetApposingMoves(team)
     else{
         for(let i = 0; i < blackonboard.length; ++i)
         {
-            GetPieceMoves(blackonboard[i]);
+            GetPieceMoves(blackonboard[i], true);
         }
         console.log('blackmoves array: ');
         console.log(blackmoves)
@@ -1733,9 +2386,6 @@ function GetApposingMoves(team)
 
 function IsPieceOffBoard(elem)
 {
-    console.log("elem in IsPieceOffBoard()@@@@@@@@@@@@@@@@");
-    console.log(elem.id);
-    console.log(elem)
     for(let i = 0; i < whiteoffboard.length; ++i)
     {
         if(elem == whiteoffboard[i]) return true;
@@ -1744,8 +2394,18 @@ function IsPieceOffBoard(elem)
     {
         if(elem == blackoffboard[i]) return true;
     }
-    console.log("IsPieceOffBoard is returning false!!");
     return false;
+}
+
+function MovesOffForCheckPiece(id)
+{
+    let newpiece = GetMyInCheckMoveArrayItem(id);
+    if(!newpiece)
+    {
+        console.log("newpiece in MovesOffForCheckPiece from GetMyIncheckMoveArrayItem is null!");
+        return;
+    }
+    newpiece.MovesOff();
 }
 
 function SetListeners(elem)
@@ -1758,6 +2418,7 @@ function SetListeners(elem)
             {
                 return;
             }
+
             chesspiecehome = child.parentElement;
             chesspiece = child;
 
@@ -1770,13 +2431,24 @@ function SetListeners(elem)
                 return;
             }
 
+            if(check)
+            {
+                if(IsValidInCheckPiece(chesspiece)) 
+                {
+                    focusenter = chesspiecehome;
+                    return;
+                }
+                focusenter = chesspiecehome;
+                return;
+            }
+
             if(child.children.item(0).id === 'lk' || child.children.item(0).id === 'dk')
             {
                 GetApposingMoves(child.children.item(0).ariaLabel);
                 king.GetMoves(chesspiecehome.id, child.children.item(0).ariaLabel, availablemoves);
                 return;
             }
-            if(child.children.item(0).id === 'lq' || child.children.item(0).id === 'dq')
+            if(child.children.item(0).className === 'lightqueen' || child.children.item(0).className === 'darkqueen')
             {
                 queen.GetMoves(chesspiecehome.id, child.children.item(0).ariaLabel, availablemoves);
                 return;
@@ -1826,6 +2498,11 @@ function SetListeners(elem)
                     console.log('cp is null in dragend!');
                     return;
                 }
+                if(check) 
+                {
+                    MovesOffForCheckPiece(chesspiece.children.item(0).id);
+                    return;
+                }
                 cp.ClearMoves();
                 return;
             }
@@ -1840,6 +2517,95 @@ function SetListeners(elem)
                 console.log('cp in dragend in null!!!!');
                 return;
             }
+
+            console.log("Right before if(check) in Dragend>>>>>>>>>>>>>>>>>>>>>>......");
+            console.log("check is: " + check);
+            if(check)
+            {
+                console.log("Entered if(check) in Dragend listener;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;");
+                if(Validate_Piece_spot(focusenter.id, chesspiece.children.item(0).id))
+                {
+                    let incheckpiece = GetMyPiece(chesspiece.children.item(0).id); 
+                    if(!incheckpiece)
+                    {
+                        console.error("incheckpiece in GetMyInCheckMovesArrayItem called from dragend is null!");
+                        return;
+                    }
+                    if(chesspiece.children.item(0).id == 'lk' || chesspiece.children.item(0).id == 'dk')
+                    {
+                        //check for castle move...
+                        if(focusenter.children.length)
+                        {
+                            let rk = focusenter.children.item(0);
+
+                            //Attempting a castle move...
+                            if(chesspiece.id == rk.id)
+                            {
+                                focusenter.removeChild(rk);
+                                chesspiecehome.removeChild(chesspiece);
+                                focusenter.appendChild(chesspiece);
+                                chesspiecehome.appendChild(rk);
+                                HandleFirstMove(chesspiece);
+                                ClearAllMoves();
+                                lock = true;
+                                check = false;
+                                status.innerHTML = Opponent + "'s Move";
+                                socket.emit('castle move', {P: Player, king: chesspiece.children.item(0).id, rook: rk.children.item(0).id, rookhome: chesspiecehome.id, kinghome: focusenter.id});
+                                return;  
+                            }
+                        }
+                    }
+                    console.log("In check Entered into valid piece and spot in Dragend!");
+                    if(focusenter.children.length)
+                    {
+                        console.log("Entered Incheck focus.children.length in dragend!");
+                        socket.emit('take-piece', (focusenter.children.item(0).children.item(0).id));
+                        RemoveFromBoard(focusenter.children.item(0));
+                    }
+
+                    check = false;
+                    console.log("check is equal false");
+
+                    chesspiecehome.removeChild(chesspiece);
+
+                    if((focusenter.id.toString().slice(0,1) === '8' || focusenter.id.toString().slice(0,1) === '1') && (chesspiece.children.item(0).className == 'lightpawn' ||
+                    chesspiece.children.item(0).className == 'darkpawn'))
+                    {
+                        let team = chesspiece.children.item(0).ariaLabel
+                        let id = "lq";
+                        if(team == 'dark') id = "dq";
+                        let pastid = chesspiece.children.item(0).id;
+                        chesspiece.children.item(0).removeChild(chesspiece.children.item(0).children.item(0));
+                        chesspiece.children.item(0).classList.replace(team + 'pawn', team + 'queen');
+                        chesspiece.children.item(0).id = GetNewQueenID(GetTeamonBoard(team), team);
+                        let image = document.createElement('img');
+                        image.src = 'Chess_Pieces/sm' + team + 'queen.png';
+                        image.ariaLabel = team;
+                        chesspiece.children.item(0).appendChild(image);
+                        let h = (.75 * window.innerHeight) / 8;
+                        h = parseInt(h.toString().substr(0, 2));
+                        focusenter.appendChild(chesspiece);
+                        switchpiece(focusenter, h); 
+                        socket.emit('queen-me', {T: team, id: pastid, nid: chesspiece.children.item(0).id});
+                    }   
+
+                    focusenter.appendChild(chesspiece);
+                    ClearAllMoves();
+                    lock = true;
+                    let piecename = chesspiece.children.item(0).className.toString();
+                    status.innerHTML = Opponent + "'s Move";
+                    piecename = chesspiece.children.item(0).ariaLabel == 'light' ? piecename.toString().substr(5) : piecename.toString().substr(4);
+                    socket.emit('move finished', {P: Player, id: chesspiece.children.item(0).id, Name: piecename, spot: focusenter.id});
+                    freshboard = false;
+                    HandleFirstMove(chesspiece);
+                    return;
+                }
+                MovesOffForCheckPiece(chesspiece.children.item(0).id);
+                socket.emit('invalid-move', ({cp: chesspiece.children.item(0).id, sp: chesspiece.parentElement.id}));
+                alert("Invalid move while you are in check!");
+                return;
+            }
+
             if(cp.IsValidMove(focusenter.id))
             {
                 if(cp.IsKing())
@@ -1877,14 +2643,21 @@ function SetListeners(elem)
                 chesspiece.children.item(0).className == 'darkpawn'))
                 {
                     let team = chesspiece.children.item(0).ariaLabel
-                    chesspiece.children.item(0).children.item(0).src;
+                    let id = "lq";
+                    if(team == 'dark') id = "dq";
+                    let pastid = chesspiece.children.item(0).id;
                     chesspiece.children.item(0).removeChild(chesspiece.children.item(0).children.item(0));
                     chesspiece.children.item(0).classList.replace(team + 'pawn', team + 'queen');
-                    chesspiece.children.item(0).id = 'lq';
+                    chesspiece.children.item(0).id = GetNewQueenID(GetTeamonBoard(team), team);
                     let image = document.createElement('img');
                     image.src = 'Chess_Pieces/sm' + team + 'queen.png';
                     image.ariaLabel = team;
                     chesspiece.children.item(0).appendChild(image);
+                    let h = (.75 * window.innerHeight) / 8;
+                    h = parseInt(h.toString().substr(0, 2));
+                    focusenter.appendChild(chesspiece);
+                    switchpiece(focusenter, h); 
+                    socket.emit('queen-me', {T: team, id: pastid, nid: chesspiece.children.item(0).id});
                 }   
                 focusenter.appendChild(chesspiece);
                 cp.ClearMoves();
@@ -1914,6 +2687,12 @@ function SetListeners(elem)
         {
             return;
         }
+        /*
+        if(check)
+        {
+            if(!IsValidInCheckPiece(chesspiece)) return;
+        }
+        */
         e.preventDefault();
         console.log('this.id in Dragenter is: ' + this.id);
         console.log('this.className is: ' + this.className);
@@ -1925,7 +2704,6 @@ function SetListeners(elem)
             //   focusenter.classList.add('drag-over');
         }
         else{
-            console.log("entered stupid looooop@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
             let htl = this.parentElement;
             while(htl.className !== 'white' || htl.className !== 'black')
             {
@@ -1937,11 +2715,23 @@ function SetListeners(elem)
             piece: chesspiece.children.item(0).id,
             square: focusenter.id
         }));
+
+        console.log("What The fuck if you made it to this statement");
     });
 
     elem.addEventListener('dragover', (e) => {
         if(!lock) e.preventDefault();
     });
+}
+
+function AssignPieces()
+{
+    let Item = blackbottom ? blackonboard[blackonboard.length - 1] : whiteonboard[whiteonboard.length - 1];
+    MYpieces.push(new BoardPieces());
+    MYpieces[MYpieces.length - 1].AddPiece(Item.children.item(0).id, GetNewMovesClass(Item.children.item(0).className));
+    Item = blackbottom ? whiteonboard[whiteonboard.length - 1] : blackonboard[blackonboard.length - 1];
+    OpponentsPieces.push(new BoardPieces());
+    OpponentsPieces[OpponentsPieces.length - 1].AddPiece(Item.children.item(0).id, GetNewMovesClass(Item.children.item(0).className));
 }
 
 function init()
@@ -1971,35 +2761,47 @@ function init()
     Bottompawn = new PawnStart(bottom.substr(0, 1), 'bottom', bottompawn.children.item(0).children.item(0).ariaLabel);
     
     //add all the pieces to thier respective arrays...
+    let Item = null;
     for(let i = 1; i < 9; ++i)
     {
         blackonboard.push(document.getElementById('dp' + i.toString()).parentElement);
         whiteonboard.push(document.getElementById('lp' + i.toString()).parentElement);
+        AssignPieces();
         if(i === 1)
         {
             blackonboard.push(document.getElementById('dr' + i.toString()).parentElement);
             whiteonboard.push(document.getElementById('lr' + i.toString()).parentElement);
+            AssignPieces();
             blackonboard.push(document.getElementById('dk' + i.toString()).parentElement);
             whiteonboard.push(document.getElementById('lk' + i.toString()).parentElement);
+            AssignPieces();
             blackonboard.push(document.getElementById('db' + i.toString()).parentElement);
             whiteonboard.push(document.getElementById('lb' + i.toString()).parentElement);
+            AssignPieces();
             blackonboard.push(document.getElementById('dk').parentElement);
             whiteonboard.push(document.getElementById('lk').parentElement);
+            AssignPieces();
             blackonboard.push(document.getElementById('dq').parentElement);
             whiteonboard.push(document.getElementById('lq').parentElement);
+            AssignPieces();
         }
         if(i === 2)
         {
             blackonboard.push(document.getElementById('dr' + i.toString()).parentElement);
             whiteonboard.push(document.getElementById('lr' + i.toString()).parentElement);
+            AssignPieces();
             blackonboard.push(document.getElementById('dk' + i.toString()).parentElement);
             whiteonboard.push(document.getElementById('lk' + i.toString()).parentElement);
+            AssignPieces();
             blackonboard.push(document.getElementById('db' + i.toString()).parentElement);
             whiteonboard.push(document.getElementById('lb' + i.toString()).parentElement);
+            AssignPieces();
         }
     }
-    console.log("Piecehome obj");
-    console.log(piecehome);
+    console.log("MYpieces:::::::::::::::::::::::::::::::::::::::::");
+    console.log(MYpieces);
+    console.log("OpposingPieces:::::::::::::::::::::::::::::::::::");
+    console.log(OpponentsPieces);
 }
 
 function SetSquareLeave()
@@ -2039,8 +2841,77 @@ function GetMirror(first, second)
     return first.toString() + second.toString();
 }
 
+function AddToMyCheckMoves(id, spot)
+{
+    console.log("Entered AddToMyCheckMoves(){{{{{{{{{{{{{{{{{{");
+    console.log(MyInCheckMovesArray);
+    for(let i = 0; i < MyInCheckMovesArray.length; ++i)
+    {
+        if(MyInCheckMovesArray[i].piece == id)
+        {
+            console.log("in AddToMyCheckMoves checkmoves= " + numofcheckmoves);
+            ++numofcheckmoves;
+            console.log("in AddToMyCheckMoves after increment checkmoves= " + numofcheckmoves);
+            MyInCheckMovesArray[i].AddMove(id, spot);
+            console.log("Adding spot: " + spot + " to piece: " + id + " i = " + i +  " [[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]");
+            return;
+        }
+    }
+    let elem = new MyAvailableCheckMoves();
+    console.log("Using Push Adding spot: " + spot + " to piece: " + id + " [[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]");
+    elem.AddMove(id, spot);
+    MyInCheckMovesArray.push(elem);
+    ++numofcheckmoves;
+    console.log("in AddToMyCheckMoves right before return checkmoves= " + numofcheckmoves);
+}
+
+function AddKingInCheckMoves(id)
+{
+    console.log("Adding AddKingInCheckMoves " + id + " ppppppppppppppppppppppppppppppppp");
+    let k = null;
+    for(let i = 0; i < MYpieces.length; ++i)
+    {
+        if(MYpieces[i].pieceid == id)
+        k = MYpieces[i];
+    }
+
+    if(!k)
+    {
+        console.log(id + " was not found in AddKingINCheckMoves!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        return;
+    }
+
+    for(let i = 0; i < k.moves.directions.length - FirstEight; ++i)
+    {
+        for(let j = 1; j < k.moves.directions[i].length; ++j)
+        {
+            console.log("in AddKingInCheckMoves checkmoves= " + numofcheckmoves);
+            AddToMyCheckMoves(id, k.moves.directions[i][j]);
+            console.log("in AddToMyCheckMoves after add from AddToMyCheckMoves checkmoves= " + numofcheckmoves);
+        }
+    }
+    if(id == 'lk' || id == 'dk')
+    {
+        
+        for(let j = 0; j < k.moves.directions[10].length; ++j)
+        {
+            console.log("in AddKingInCheckMoves checkmoves= " + numofcheckmoves);
+            AddToMyCheckMoves(id, k.moves.directions[10][j]);
+            console.log("in AddToMyCheckMoves after add from AddToMyCheckMoves checkmoves= " + numofcheckmoves);
+        }
+        
+    }
+
+    console.log("in AddKingInCheckMoves right before return checkmoves= " + numofcheckmoves);
+}
+
+function ClearMyCheckMoves()
+{
+    MyInCheckMovesArray = [];
+}
+
 socket.on('remove-piece', (data) =>{
-    console.log("Move recieved to second board!");
+    console.log("Move recieved to second board!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
     let cp = document.getElementById(data);
     if(cp === null)
     {
@@ -2095,39 +2966,116 @@ socket.on('checkforcheck', (obj) => {
     lock = false;
     let cp = null;
     let piecemoves = [];
+    let mypiecemoves = [];
+    let mypieces = [];
     let team = !blackbottom ? 'lt' : '';
     console.log('bottompawn.children.item(0).id: ' + team);
     if(team == 'lt')
     {
+        mypieces = whiteonboard;
         cp = document.getElementById('lk');
         GetApposingMoves('light');
-        piecemoves = blackmoves;
+     //   piecemoves = blackmoves;
+        piecemoves = OpponentsPieces;
     }
     else{
+        mypieces = blackonboard;
         cp = document.getElementById('dk');
         GetApposingMoves('dark');
-        piecemoves = whitemoves;
+    //    piecemoves = whitemoves;
+        piecemoves = OpponentsPieces;
     }
 
-    console.log('piecemoves.length>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
+    let angleofattack = [];
+    let angleofdefense = [];
+    console.log("King Parent element id");
+    console.log(cp.parentElement.parentElement.id);
+    console.log("Piecemoves array");
     console.log(piecemoves);
-    for(let i = 0; i < piecemoves.length; ++i)
+    for(let i = 0; i < piecemoves.length - 2; ++i)
     {
-        if(piecemoves[i] == cp.parentElement.parentElement.id)
+        for(let j = 0; j < piecemoves[i].moves.directions.length; ++j)
         {
-            check = true;
-            let LandingSpot = blackbottom ? GetMirror(obj.spot.toString().substr(0,1), obj.spot.toString().substr(1,2)) : document.getElementById(obj.id).parentElement.parentElement.id;
-            status.innerHTML = obj.P.PlayerName  + " Put You in Check with thier " + obj.Name + ", Your Move";
-            alert(obj.P.PlayerName + " put you in check!");
+            for(let k = 0; k < piecemoves[i].moves.directions[j].length; ++k)
+            {
+                console.log(piecemoves[i].moves.directions[j][k] + " == " + cp.parentElement.parentElement.id);
+                if(piecemoves[i].moves.directions[j][k] == cp.parentElement.parentElement.id)
+                {
+                    check = true;
+                    angleofattack = piecemoves[i].moves.directions[j];
+                }
+            }
+        }
+    }
+
+    numofcheckmoves = 0;
+    if(check)
+    {
+        console.log("Entered check if statement%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+        console.log(angleofattack);
+        //check for checkmate...
+        console.log(mypieces);
+        for(let i = 0; i < mypieces.length; ++i)
+        {
+            console.log("entered loop for mypieces:::::::::::::::::::::");
+            GetPieceMoves(mypieces[i], false);
+        }
+        console.log("Right before checking for check loop::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
+        AddKingInCheckMoves(blackbottom ? 'dk' : 'lk');
+        console.log("right after addkingincheckmoves checkmoves= " + numofcheckmoves);
+
+        let iter = 0;
+        console.log(MYpieces);
+        for(let i = 0; i < MYpieces.length - 1; ++i)
+        {
+            if(MYpieces[i].moves.IsKing()) continue;
+            ++iter;
+            console.log("iter is:::::::::::::::::::::::::::::::::::::::");
+            console.log(iter);
+            console.log("i is " + i);
+            console.log(("MYpieces.length: " + MYpieces.length));
+            console.log("Isking(): " + MYpieces[i].moves.IsKing());
+            console.log("inside first loop " + MYpieces[i].moves.directions.length);
+            for(let j = 0; j < MYpieces[i].moves.directions.length - FirstEight; ++j)
+            {
+                console.log(MYpieces[i].moves);
+                console.log("inside second loop " + MYpieces[i].moves.directions[j].length);
+                for(let k = 1; k < MYpieces[i].moves.directions[j].length; ++k)
+                {
+                    console.log("inside third loop " + angleofattack.length);
+                    for(let l = 0; l < angleofattack.length && angleofattack.length; ++l)
+                    {
+                        console.log("inside fourth loop");
+                        console.log(MYpieces[i].moves.directions[j][k] + " == " + angleofattack[l])
+                        if(MYpieces[i].moves.directions[j][k] == angleofattack[l])
+                        {
+                            console.log("Inside if == after fourthloop");
+                            console.log("in fourthloop checkmoves= " + numofcheckmoves);
+                            AddToMyCheckMoves(MYpieces[i].pieceid, angleofattack[l]);
+                        }
+                    }
+                }
+            }
+        }  
+        console.log("right before check for checkmate addkingincheckmoves checkmoves= " + numofcheckmoves);
+        if(!numofcheckmoves)
+        {
+            lock = true;
+            checkalert.style.display = 'block';
+            socket.emit('i-lost', ('You Win!'));
             return;
         }
-    } 
-
-    check = false;
+        status.innerHTML = obj.P.PlayerName  + " Put You in Check with thier " + obj.Name + ", Your Move";
+        alert(obj.P.PlayerName + " put you in check!");
+        return;
+    }
+    
+    
     let LandingSpot = blackbottom ? GetMirror(obj.spot.toString().substr(0,1), obj.spot.toString().substr(1,2)) : document.getElementById(obj.id).parentElement.parentElement.id;
     status.innerHTML = obj.P.PlayerName + " moved their " + obj.Name + " to " + LandingSpot + ", Your Move";
     Opponent = obj.P.PlayerName;
   //  alert(obj.P.PlayerName + " moved their " + obj.Name + " to " + LandingSpot);
+  
 });
 
 socket.on('send castle move', (obj) => {
@@ -2171,7 +3119,7 @@ socket.on('check_state_of_board', (message) => {
 
 socket.on('get_board_data', (message) => {
     console.log('entered get_board_data on clientside');
-    let obj = {wob: [], bob: [], w: [], b: []};
+    let obj = {wob: [], bob: [], w: [], b: [], pol: [], por: []};
     for(let i = 0; i < whiteonboard.length; ++i)
     {
         if(IsMoved(whiteonboard[i])) obj.wob.push(new map(whiteonboard[i].parentElement.id, whiteonboard[i].children.item(0).id));
@@ -2188,7 +3136,44 @@ socket.on('get_board_data', (message) => {
     {
         obj.b.push(blackteam[i].children.item(0).id);
     }
+    for(let i = 0; i < leftsideboard.length; ++i)
+    {
+        obj.por.push(leftsideboard[i].id);
+        obj.por.push(leftsideboard[i].children.item(0).children.item(0).id);
+    }
+    for(let i = 0; i < rightsideboard.length; ++i)
+    {
+        obj.por.push(rightsideboard[i].id);
+        obj.por.push(rightsideboard[i].children.item(0).children.item(0).id);
+    }
     socket.emit('board_data', (obj));
+});
+
+socket.on('queen-it', (obj) => {
+    console.log("entered queen-it::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
+    console.log("queen-it obj!!!");
+    console.log(obj);
+    let team = obj.T;
+    let id = obj.id;
+    let cp = document.getElementById(id);
+    let pc = document.getElementById('lp7');
+    console.log(pc);
+    if(cp == null)
+    {
+        console.log("cp is nullptr in socket.in(room).emit('queen-it)");
+        return;
+    }
+    console.log(cp);
+    cp.removeChild(cp.children.item(0));
+    cp.classList.replace(team + 'pawn', team + 'queen');
+    cp.id = obj.nid;
+    let image = document.createElement('img');
+    image.src = 'Chess_Pieces/sm' + team + 'queen.png';
+    image.ariaLabel = team;
+    cp.appendChild(image);
+    let h = (.75 * window.innerHeight) / 8;
+    h = parseInt(h.toString().substr(0, 2));
+    switchpiece(cp.parentElement.parentElement, h);
 });
 
 socket.on('update-board', (boarddata) => {
@@ -2221,6 +3206,22 @@ socket.on('update-board', (boarddata) => {
         let cp = document.getElementById(boarddata.b[i].piece).parentElement;
         RemoveFromBoard(cp);
     }
+    for(let i = 0; i < boarddata.por.length; ++i)
+    {
+        let cp = document.getElementById(boarddata.por[i].id);
+        if(i + 1 < boarddata.por.lenth) cp.appendChild(document.getElementById(boarddata.por[i + 1].id));
+    }
+    for(let i = 0; i < boarddata.pol.length; ++i)
+    {
+        let cp = document.getElementById(boarddata.pol[i].id);
+        if(i + 1 < boarddata.pol.lenth) cp.appendChild(document.getElementById(boarddata.pol[i + 1].id));
+    }
+});
+
+socket.on('you-win',(something) => {
+    innercheckalert.innerHTML = something;
+    checkalert.style.display = 'block';
+    lock = true;
 });
 
 

@@ -5,13 +5,18 @@
         <title id="title">Welcome To Chess</title> 
         <link rel="stylesheet" href="smallstyle.css">
     </head>
-    <header>
-        <h1 id="status">Chess</h1>
-        <p class="paragraph" id="p">New Game</p>
-    </header>
+
     <body>
-        <div class="buttoncontainer" id="button_con">
-            <button class="button" id="moves">Moves On</button>
+        <div class="main-div">
+            <div class="header-div">
+                <h1 id="status">Chess</h1>
+            </div>
+            <div class="sub-header">
+                <button class="button rounded-corners" id="moves">Moves On</button>
+            </div>
+            <div class="status">
+                <p class="paragraph" id="p">New Game</p>
+            </div>
         </div>
         <div class="Chess-Board" id="cb">
             <div class="row1" id="r1">
@@ -126,6 +131,11 @@
                 <div class="square" id="89"></div>
                 <div class="square" id="90"></div>
             </div>
+            
+            <div class="notify" id="ny">
+                <p class="checkmate" id="cm">Checkmate!</p>
+            </div>
+        
         </div>
     </body>
     <script src="dist/main.js" type="module"></script>

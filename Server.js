@@ -293,6 +293,12 @@ io.on('connection', (socket) =>{
         socket.in(room).emit('checkforcheck', (obj));
     });
 
+    socket.on('i-lost', (something) => {
+        console.log(something);
+        let room = FindRoom(socket.id);
+        socket.in(room).emit('you-win', (something));
+    });
+
     socket.on('castle move', (obj) => {
         console.log(obj);
         let room = FindRoom(socket.id);
@@ -306,6 +312,12 @@ io.on('connection', (socket) =>{
         socket.in(room).emit('checkforcheck', (newobj));
     });
     
+    socket.on('queen-me', (obj) =>{
+        console.log("queen-me obj");
+        console.log(obj);
+        let room = FindRoom(socket.id);
+        socket.in(room).emit('queen-it', (obj));
+    });
 
     socket.on('drag-leave', (obj) => {
         let room = FindRoom(socket.id);

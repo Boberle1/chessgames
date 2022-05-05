@@ -3261,7 +3261,7 @@ socket.on('checkforcheck', (obj) => {
             console.log(("MYpieces.length: " + MYpieces.length));
             console.log("Isking(): " + MYpieces[i].moves.IsKing());
             console.log("inside first loop " + MYpieces[i].moves.directions.length);
-            for(let j = 0; j < MYpieces[i].moves.directions.length - FirstEight; ++j)
+            for(let j = 0; j < MYpieces[i].moves.directions.length; ++j)
             {
                 console.log(MYpieces[i].moves);
                 console.log("inside second loop " + MYpieces[i].moves.directions[j].length);

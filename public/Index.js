@@ -161,7 +161,12 @@ class MyAvailableCheckMoves
 {
     piece = null;
     move = [];
-    
+    constructor(elem, spot)
+    {
+        this.piece = elem;
+        this.move.push(spot);
+    }
+
     AddMove(elem, spot)
     {
         console.log("Adding piece: " + elem + " to spot: " + spot + " in AddMove()");
@@ -459,17 +464,11 @@ function GetApposingTeamPieces(team)
 
 function CheckingKingMove(team, id)
 {
-    let item = GetApposingTeamPieces(team);
-    if(!item)
+    console.error("Team: " + team + " spot " + id + " is being checked by team ")
+    for(let l = 0; l < OpponentsPieces.length; ++l)
     {
-        console.log("item is null in CheckingKingMove!");
-        return false;
-    }
-
-    for(let l = 0; l < item.length - 1; ++l)
-    {
-        console.error("CheckKingMoveloop item.id: " + item[l].pieceid);
-        if(!item[l].moves.CheckKingMove(id)) return false;
+        console.error("CheckKingMoveloop item.id: " + OpponentsPieces[l].pieceid);
+        if(!OpponentsPieces[l].moves.CheckKingMove(id)) return false;
     }
     return true;
 }
@@ -925,40 +924,40 @@ class Moves{
     {
         if(this.IsPawn())
         {
-            console.error("In IsPawn");
             console.log(this.directions);
             for(let i = 0; i < 4; ++i)
             {
                 for(let j = 1; j < this.directions[i].length; ++ i)
                 {
-                    console.error("diag " + this.directions[i][j] + " == " + id);
                     if(this.directions[i][j] == id) return false;
                 }
             }
             for(let k = 0; k < this.directions[theomovedia].length; ++k)
             {
-                console.log("k is: " + k);
-                console.log("Length of array" + this.directions[theomovedia].length);
-                console.error("theoretical " + this.directions[theomovedia][k] + " == " + id);
                 if(this.directions[theomovedia][k] == id) return false;
             }
             return true;
         }
+
+        if(this.IsBishop()) console.error("this.directions.length - FirstEight " + this.directions.length - FirstEight);
         for(let i = 0; i < this.directions.length - FirstEight; ++i)
         {
             for(let j = 1; j < this.directions[i].length; ++j)
             {
+                console.error("id " + id + " == this.directions[i][j] " + this.directions[i][j]);
                 if(id == this.directions[i][j]) return false;
             }
         }
-        
+        if(this.IsBishop()) console.error("this.directions[theomovedia].length " + this.directions[theomovedia].length);
         for(let i = 0; i < this.directions[theomovedia].length; ++i)
         {
+            if(this.IsBishop()) console.error("this.directions[theomovedia][i] " + this.directions[theomovedia][i] + " == id " + id );
             if(this.directions[theomovedia][i] == id) return false;
         }
-
+        if(this.IsBishop()) console.error("this.directions[theomovehor].length " + this.directions[theomovehor].length);
         for(let i = 0; i < this.directions[theomovehor].length; ++i)
         {
+            if(this.IsBishop()) console.error("this.directions[theomovehor][i] " + this.directions[theomovehor][i] + " == id " + id );
             if(this.directions[theomovehor][i] == id) return false;
         }
 
@@ -1083,7 +1082,6 @@ class Dia_vh_Moves extends Moves{
         col = parseInt(spot.toString().slice(1,2));
         for(let iteration = 1; iteration < 5; ++iteration)
         {
-            console.log("right before this.directions in getDaimoves::::::::::::::::::::::::::::::::::::::::");
             this.onemove = false;
             this.directions[iteration - 1].push(spot);
             this.DiaMoves(this.Rowincrement(row, iteration), this.Colincrememt(col, iteration), team, kingmove, moves_available, theoretical, iteration);
@@ -1121,15 +1119,20 @@ class Dia_vh_Moves extends Moves{
             }
             if(kingmove)
             {
+                if(!CheckingKingMove(team, next.id)) return;
+                /*
                 console.log("KingMove is true");
                 let opposition = GetApposingTeamMoves(team);
+                console.error("opposition dia children");
+                console.log(opposition)
                 for(let i = 0; i < opposition.length; ++i)
                 {
+                    console.error("opposition[i] " + opposition[i] + " == next.id " + next.id);
                     if(opposition[i] == next.id)
                     {
                         return;
                     }
-                }
+                }*/
             }
             if(moves_available)
             {
@@ -1139,6 +1142,7 @@ class Dia_vh_Moves extends Moves{
 
             this.directions[iteration - 1].push(next.id);
             this.moves.push(next.id);
+            return;
             if(theoretical && (next.children.item(0).children.item(0).id === 'lk' || theoretical && next.children.item(0).children.item(0).id === 'dk'))
             {
                 if(!kingmove)
@@ -1154,8 +1158,11 @@ class Dia_vh_Moves extends Moves{
             if(!CheckingKingMove(team, next.id)) return;
             /*
             let opposition = GetApposingTeamMoves(team);
+            console.error("opposition dia");
+            console.log(opposition);
             for(let i = 0; i < opposition.length; ++i)
             {
+                console.error("opposition[i] " + opposition[i] + " == next.id " + next.id);
                 if(opposition[i] == next.id)
                 return;
             }*/
@@ -1175,7 +1182,7 @@ class Dia_vh_Moves extends Moves{
     
     Rowincrement(row, iter)
     {
-        console.log("This is a Diag func increment row!!!");
+    //    console.log("This is a Diag func increment row!!!");
         switch(iter)
         {
             case 1: return row + 1;
@@ -1188,7 +1195,7 @@ class Dia_vh_Moves extends Moves{
 
     Colincrememt(col, iter)
     {
-        console.log("This is a Diag func increment col!!!");
+ //       console.log("This is a Diag func increment col!!!");
         switch(iter)
         {
             case 1: return col + 1;
@@ -1255,7 +1262,6 @@ class Dia_vh_Moves extends Moves{
         this.onemove = false;
         for(let iteration = 1; iteration < 5; ++iteration)
         {
-            console.log("right before this.directions in getHormoves::::::::::::::::::::::::::::::::::::::::");
             this.onemove = false;
             this.directions[iteration + 3].push(spot);
             this.HV_Moves(this.increment_hv_row(row, iteration), this.incremen_th_vcol(col, iteration), team, kingmove, moves_available, theoretical, iteration);
@@ -1291,25 +1297,20 @@ class Dia_vh_Moves extends Moves{
     {
         if(this.check_h_v(row, col)) return;
         let next =  document.getElementById(row.toString() + col.toString());
-        console.log('row, col');
-        console.log(row + "" + col);
-        console.error("in CastleCheck");
-        console.log("team: " + team);
         if(next.children.length)
         {
-            console.log(next.children.item(0).children.item(0).ariaLabel);
-            console.log("team + 'rook'" + team + 'rook');
             if(next.children.item(0).children.item(0).ariaLabel != team) return;
             if(next.children.item(0).children.item(0).className != team + 'rook') return;
             if(col.toString() === '8' || col.toString() === '1')
             {
+                if(!CheckingKingMove(team, next.id)) return;
                 if(moves_available) next.classList.add('moves');
                 this.directions[this.directions.length - 1].push(next.id);
                 this.moves.push(next.id);
                 return;
             }
+            return;
         }
-        console.log("Calling CastleCheck again:: row/col: " + row + "" + col + " team: " + team);
         this.CastleCheck(row, this.incremen_th_vcol(col, iter), iter, moves_available, team);
     }
 
@@ -1336,32 +1337,34 @@ class Dia_vh_Moves extends Moves{
                     {
                         next.classList.add('moves');
                     }
-                    this.directions[this.directions.length - 3].push(next.id);
+                    this.directions[theomovehor].push(next.id);
                     this.moves.push(next.id);
                     return;
                 }
-                console.log("You hit the return because ths.onemove is used and necessary^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
                 return;
             }
             if(kingmove)
             {
+                if(!CheckingKingMove(team, next.id)) return;
+                /*
                 let opposition = GetApposingTeamMoves(team);
+                console.error("opposition hor children");
                 console.log(opposition);
                 for(let i = 0; i < opposition.length; ++i)
                 {
+                    console.error("opposition[i] " + opposition[i] + " == next.id " + next.id);
                     if(opposition[i] === next.id)
                     return;
-                }
+                }*/
             }
             if(moves_available)
             {
                 next.classList.add('moves');
             }
 
-            console.log("right before the first this.direction.push(" + next.id +")");
             this.directions[iteration + 3].push(next.id);
             this.moves.push(next.id);
-
+            return;
             if(theoretical && next.children.item(0).children.item(0).id === 'lk' || theoretical && next.children.item(0).children.item(0).id === 'dk')
             {
                 if(!kingmove)
@@ -1378,21 +1381,21 @@ class Dia_vh_Moves extends Moves{
             if(!CheckingKingMove(team, next.id)) return;
             /*
             let opposition = GetApposingTeamMoves(team);
-            console.log("diaglu opposition");
+            console.error("opposition hor");
             console.log(opposition);
             for(let i = 0; i < opposition.length; ++i)
             {
+                console.error("opposition[i] " + opposition[i] + " == next.id " + next.id);
                 if(opposition[i] === next.id)
                 return;
-            }
-            */
+            }*/
+            
         }
         if(moves_available)
         {
             next.classList.add('moves');
         }
 
-        console.log("right before the second this.direction.push(" + next.id +")");
         this.directions[iteration + 3].push(next.id);
         this.moves.push(next.id);
         if(!kingmove)
@@ -1403,7 +1406,7 @@ class Dia_vh_Moves extends Moves{
 
     increment_hv_row(row, iter)
     {
-        console.log("This is a horizontal func increment row!!!");
+    //    console.log("This is a horizontal func increment row!!!");
         switch(iter)
         {
             case 1: return row;
@@ -1416,7 +1419,7 @@ class Dia_vh_Moves extends Moves{
 
     incremen_th_vcol(col, iter)
     {
-        console.log("This is a horizontal func increment col!!!");
+   //     console.log("This is a horizontal func increment col!!!");
         switch(iter)
         {
             case 1: return col + 1;
@@ -1762,13 +1765,7 @@ class Knight extends Moves{
         let row = parseInt(spot.toString().slice(0,1));
         let col = parseInt(spot.toString().slice(1,2));
 
-        let originrow = row;
-        let origincol = col;
-
-        for(let i = 0; i < this.directions.length - 3; ++i) this.directions[i].push(spot);
-        console.log("right before knight push moves:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
-        this.directions[0].push(spot);
-        console.log("right after knight push moves:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
+        this.FillFirstPosition(spot);
         this.checkmoves = 0;
         this.KnightMove(row - 1, col - 2, team, moves_available, theoretical);
         this.KnightMove(row -2, col - 1, team, moves_available, theoretical);
@@ -1813,7 +1810,7 @@ class Knight extends Moves{
                          next.classList.add('moves');
                     }
                     this.moves.push(next.id);
-                    this.directions[this.directions.length - 1].push(next.id);
+                    this.AddTheoreticalMoveDia(next.id);
                     return;
                 }
                 return;
@@ -1904,11 +1901,7 @@ class Pawn extends Moves{
 
                 row = originrow;
                 col = origincol;
-                console.error("Entering first MoveDiag in if Toppawn.row > 2")
-                console.error("row/col: " + row + "" + col);
                 this.MoveDiag(--row, col - 1, team, moves_available, theoretical);
-                console.error("Entering second MoveDiag in if Toppawn.row > 2")
-                console.error("row/col: " + row + "" + col);
                 this.MoveDiag(row, col + 1, team, moves_available, theoretical);
                 return;
             }
@@ -1916,11 +1909,7 @@ class Pawn extends Moves{
 
             row = originrow;
             col = origincol;
-            console.error("Entering first MoveDiag in if Toppawn.row == 2")
-            console.error("row/col: " + row + "" + col);
             this.MoveDiag(++row, col - 1, team, moves_available, theoretical);
-            console.error("Entering second MoveDiag in if Toppawn.row == 2")
-            console.error("row/col: " + row + "" + col);
             this.MoveDiag(row, col + 1, team, moves_available, theoretical);
 
              return;
@@ -1933,11 +1922,7 @@ class Pawn extends Moves{
 
                 row = originrow;
                 col = origincol;
-                console.error("Entering first MoveDiag in if Bottompawn.row < 7")
-                console.error("row/col: " + row + "" + col);
                 this.MoveDiag(++row, col - 1, team, moves_available, theoretical);
-                console.error("Entering second MoveDiag in if Bottompawn.row !< 7")
-                console.error("row/col: " + row + "" + col);
                 this.MoveDiag(row, col + 1, team, moves_available, theoretical);
                 return;
             }
@@ -1946,11 +1931,7 @@ class Pawn extends Moves{
 
             row = originrow;
             col = origincol;
-            console.error("Entering MoveDiag not in if statment first")
-            console.error("row/col: " + row + "" + col);
             this.MoveDiag(--row, col - 1, team, moves_available, theoretical);
-            console.error("Entering MoveDiag not in if statment second")
-            console.error("row/col: " + row + "" + col);
             this.MoveDiag(row, col + 1, team, moves_available, theoretical);
 
             return;
@@ -2045,8 +2026,6 @@ class Pawn extends Moves{
 
             if(theoretical)
             {
-                console.error('row: ' + row + ' col: ' + col + "In theoretical");
-                console.error("movesdiag moves_available: " + moves_available)
                 if(moves_available)
                 {
                     diag.classList.add('moves');
@@ -2059,14 +2038,10 @@ class Pawn extends Moves{
             {
                 if(diag.children.item(0).children.item(0).ariaLabel !== team)
                 {
-                    console.error('row: ' + row + ' col: ' + col);
-                    console.error("movesdiag moves_available: " + moves_available)
                     if(moves_available)
                     {
                         diag.classList.add('moves');
                     }
-                    console.log("right before pawn push moves:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
-                    console.log("right after knight push moves:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
                     this.AddMovesForPawn(diag.id, true);
                     this.moves.push(diag.id);
                 }
@@ -2321,81 +2296,6 @@ function GetNewMovesClass(id)
     return null;
 }
 
-function FindMoves(id, team, showmoves, theoretical)
-{
-    let item = null;
-    let elem = document.getElementById(id).parentElement;
-    console.log("MyPieces::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
-    console.log(MYpieces);
-    console.log("OpponentsPieces:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
-    console.log(OpponentsPieces);
-    if(blackbottom)
-    {
-        if(team == 'dark')
-        {
-            for(let i = 0; i < MYpieces.length; ++i)
-            {
-                if(MYpieces[i].pieceid == id)
-                item = MYpieces[i];
-            }
-        }
-        else
-        {
-            for(let i = 0; i < OpponentsPieces.length; ++i)
-            {
-                if(OpponentsPieces[i].pieceid == id)
-                item = OpponentsPieces[i];
-            }
-        }
-    }
-    else
-    {
-        if(team == 'dark')
-        {
-            for(let i = 0; i < OpponentsPieces.length; ++i)
-            {
-                if(OpponentsPieces[i].pieceid == id)
-                item = OpponentsPieces[i];
-            }
-        }
-        else
-        {
-            for(let i = 0; i < MYpieces.length; ++i)
-            {
-                if(MYpieces[i].pieceid == id)
-                item = MYpieces[i];
-            }
-        }
-    }
-    if(!item)
-    {
-        console.log("Item is null in FindMoves!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-        return;
-    }
-
-    console.log("right before GetMoves in FindMoves::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
-    item.moves.ClearMoves();
-    item.moves.GetMoves(elem.parentElement.id, elem.children.item(0).ariaLabel, showmoves, theoretical);
-    if(team == 'dark')
-    {
-        for(let i = 0; i < item.moves.moves.length; ++i)
-        {
-            console.log("what the hell in blackmoves::::::::::::::::::::::::::::::::::::::::::::::::");
-            blackmoves.push(item.moves.moves[i]);
-        }
-    }
-    else
-    {
-        for(let i = 0; i < item.moves.moves.length; ++i)
-        {
-            console.log("what the hell in whitemoves::::::::::::::::::::::::::::::::::::::::::::::::");
-            whitemoves.push(item.moves.moves[i]);
-        }
-    }
-
-    console.log("returning from FindMoves::::::");
-}
-
 function GetPieceMoves(elem, theoretical, team)
 {
     elem.moves.ClearMoves();
@@ -2550,8 +2450,8 @@ function GetApposingMoves(team)
     for(let i = 0; i < OpponentsPieces.length; ++i)
     {
         console.log("OpponentsPieces...");
-        console.log(OpponentsPieces[i]);
         GetPieceMoves(OpponentsPieces[i], true, t);
+        console.log(OpponentsPieces[i]);
     }
     /*
     if(team === 'dark')
@@ -2581,7 +2481,10 @@ function GetMyMoves()
     let team = blackbottom ? 'dark' : 'light';
     for(let i = 0; i < MYpieces.length; ++i)
     {
+        console.error("GetMyMoves...");
+        console.log("isKing " + MYpieces[i].moves.IsKing());
         GetPieceMoves(MYpieces[i], false, team);
+        console.log(MYpieces[i])
     }
 }
 
@@ -2807,7 +2710,7 @@ function SetListeners(elem)
                     }
 
                     check = false;
-                    console.log("check is equal false");
+                    console.error("check is equal false");
 
                     chesspiecehome.removeChild(chesspiece);
 
@@ -3097,7 +3000,7 @@ function AddToMyCheckMoves(id, spot)
     console.log(MyInCheckMovesArray);
     for(let i = 0; i < MyInCheckMovesArray.length; ++i)
     {
-        if(MyInCheckMovesArray[i].piece == id)
+        if(MyInCheckMovesArray[i].IsMyPiece(id))
         {
             console.log("in AddToMyCheckMoves checkmoves= " + numofcheckmoves);
             ++numofcheckmoves;
@@ -3107,10 +3010,8 @@ function AddToMyCheckMoves(id, spot)
             return;
         }
     }
-    let elem = new MyAvailableCheckMoves();
     console.log("Using Push Adding spot: " + spot + " to piece: " + id + " [[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]");
-    elem.AddMove(id, spot);
-    MyInCheckMovesArray.push(elem);
+    MyInCheckMovesArray.push(new MyAvailableCheckMoves(id, spot));
     ++numofcheckmoves;
     console.log("in AddToMyCheckMoves right before return checkmoves= " + numofcheckmoves);
 }
@@ -3213,12 +3114,13 @@ socket.on('move-back', (obj) => {
 
 
 socket.on('checkforcheck', (obj) => {
+    check = false;
     lock = false;
     let cp = GetMyKing();
     let myking = document.getElementById(cp.pieceid);
     UpDateOpponentsPieceMove(obj.spot, obj.id);
     GetApposingMoves();
-    console.log("After Getting OpposingMoves in checkforcheck!!!!!!!!!!");
+ //   console.log("After Getting OpposingMoves in checkforcheck!!!!!!!!!!");
     let angleofattack = [];
     for(let i = 0; i < OpponentsPieces.length - 2; ++i)
     {
@@ -3226,7 +3128,7 @@ socket.on('checkforcheck', (obj) => {
         {
             for(let k = 0; k < OpponentsPieces[i].moves.directions[j].length; ++k)
             {
-                console.log(OpponentsPieces[i].moves.directions[j][k] + " == " + myking.parentElement.parentElement.id);
+    //            console.log(OpponentsPieces[i].moves.directions[j][k] + " == " + myking.parentElement.parentElement.id);
                 if(OpponentsPieces[i].moves.directions[j][k] == myking.parentElement.parentElement.id)
                 {
                     check = true;
@@ -3239,43 +3141,43 @@ socket.on('checkforcheck', (obj) => {
     numofcheckmoves = 0;
     if(check)
     {
-        console.log("Entered check if statement%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
-        console.log(angleofattack);
+    //    console.log("Entered check if statement%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+    //    console.log(angleofattack);
         //check for checkmate...
         GetMyMoves();
-        console.log("Right before checking for check loop::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
+     //   console.log("Right before checking for check loop::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
         AddKingInCheckMoves(blackbottom ? 'dk' : 'lk');
-        console.log("right after addkingincheckmoves checkmoves= " + numofcheckmoves);
+     //   console.log("right after addkingincheckmoves checkmoves= " + numofcheckmoves);
 
         let iter = 0;
-        console.log(MYpieces);
-        console.log(OpponentsPieces);
+    //    console.log(MYpieces);
+     //   console.log(OpponentsPieces);
         //check for checkmate...
         for(let i = 0; i < MYpieces.length - 1; ++i)
         {
             if(MYpieces[i].moves.IsKing()) continue;
             ++iter;
-            console.log("iter is:::::::::::::::::::::::::::::::::::::::");
-            console.log(iter);
-            console.log("i is " + i);
-            console.log(("MYpieces.length: " + MYpieces.length));
-            console.log("Isking(): " + MYpieces[i].moves.IsKing());
-            console.log("inside first loop " + MYpieces[i].moves.directions.length);
-            for(let j = 0; j < MYpieces[i].moves.directions.length; ++j)
+        //    console.log("iter is:::::::::::::::::::::::::::::::::::::::");
+        //    console.log(iter);
+        //    console.log("i is " + i);
+        //    console.log(("MYpieces.length: " + MYpieces.length));
+        //    console.log("Isking(): " + MYpieces[i].moves.IsKing());
+       //     console.log("inside first loop " + MYpieces[i].moves.directions.length);
+            for(let j = 0; j < MYpieces[i].moves.directions.length - FirstEight; ++j)
             {
-                console.log(MYpieces[i].moves);
-                console.log("inside second loop " + MYpieces[i].moves.directions[j].length);
+              //  console.log(MYpieces[i].moves);
+              //  console.log("inside second loop " + MYpieces[i].moves.directions[j].length);
                 for(let k = 1; k < MYpieces[i].moves.directions[j].length; ++k)
                 {
-                    console.log("inside third loop " + angleofattack.length);
+                 //   console.log("inside third loop " + angleofattack.length);
                     for(let l = 0; l < angleofattack.length && angleofattack.length; ++l)
                     {
-                        console.log("inside fourth loop");
-                        console.log(MYpieces[i].moves.directions[j][k] + " == " + angleofattack[l])
+                   //     console.log("inside fourth loop");
+                   //     console.log(MYpieces[i].moves.directions[j][k] + " == " + angleofattack[l])
                         if(MYpieces[i].moves.directions[j][k] == angleofattack[l])
                         {
-                            console.log("Inside if == after fourthloop");
-                            console.log("in fourthloop checkmoves= " + numofcheckmoves);
+                     //       console.log("Inside if == after fourthloop");
+                      //      console.log("in fourthloop checkmoves= " + numofcheckmoves);
                             AddToMyCheckMoves(MYpieces[i].pieceid, angleofattack[l]);
                         }
                     }
@@ -3287,6 +3189,7 @@ socket.on('checkforcheck', (obj) => {
         {
             lock = true;
             checkalert.style.display = 'block';
+            status.innerHTML = obj.P.PlayerName + " Wins";
             socket.emit('i-lost', ('You Win!'));
             return;
         }
@@ -3456,6 +3359,7 @@ socket.on('update-board', (boarddata) => {
 });
 
 socket.on('you-win',(something) => {
+    status.innerHTML = something;
     innercheckalert.innerHTML = something;
     checkalert.style.display = 'block';
     lock = true;

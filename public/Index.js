@@ -37,7 +37,10 @@ let numofcheckmoves = 0;
 let theomovehor = 8;
 //index in off theoretical move diagnal array in Moves.directions array...
 let theomovedia = 9;
-let FirstEight = 3;
+
+//index for moves past the king to ensure he cant move backwards from angle of attack as he would still be in check...
+let PKM = 10;
+let FirstEight = 4;
 
 console.log("We are in the right one!!!");
 
@@ -523,8 +526,13 @@ function RemoveItemMyInCheckArray(id)
 
 function RemoveFromBoard(elem, putonside = true)
 {
+  //  console.error("Youve Entered RemoveFromBoard****************************** ");
+  //  console.error("elem.id: " + elem.id);
+  //  console.error("MYpieces.length: " + MYpieces.length);
+   // console.error("OpponentsPieces.length: " + OpponentsPieces.length);
     if(elem.id === 'lt')
     {
+       // console.log("In elem.id: " + elem.id);
         whiteteam.push(elem);
         for(let i = 0; i < whiteonboard.length; ++i)
         {
@@ -535,13 +543,17 @@ function RemoveFromBoard(elem, putonside = true)
                 whiteoffboard.push(elem);
             }
         }
-        console.log(whiteonboard);
+       // console.log(whiteonboard);
         if(blackbottom)
         {
+            console.log("blackbottom: " + blackbottom);
             for(let i = 0; i < OpponentsPieces.length; ++i)
             {
+               // console.log("team id is: " + elem.id + " blackbottom is true");
+               // console.error("OpponentsPieces id " + OpponentsPieces[i].pieceid + " == elem.children.item(0).id" + elem.children.item(0).id);
                 if(OpponentsPieces[i].pieceid == elem.children.item(0).id) 
                 {
+                  //  console.error("Removing OpponentsPieces id is: " + OpponentsPieces[i].pieceid);
                     OpponentsPieces.splice(i, 1);
                     break;
                 }
@@ -551,10 +563,14 @@ function RemoveFromBoard(elem, putonside = true)
         }
         else
         {
+           // console.log("blackbottom: " + blackbottom);
             for(let i = 0; i < MYpieces.length; ++i)
             {
-                if(MYpieces[i].pieceid == elem.children.item(0).id) 
+              //  console.log("team id is: " + elem.id + " blackbottom is false");
+               // console.error("MYpieces id " + MYpieces[i].pieceid + " == elem.children.item(0).id" + elem.children.item(0).id);
+                if(MYpieces[i].IsMyPiece(elem.children.item(0).id)) 
                 {
+                   // console.error("Removing MYpiece id is: " + MYpieces[i].pieceid);
                     MYpieces.splice(i, 1);
                     break;
                 }
@@ -565,6 +581,7 @@ function RemoveFromBoard(elem, putonside = true)
         }
     }
     else{
+        console.log("In elem.id: " + elem.id);
         blackteam.push(elem);
         for(let i = 0; i < blackonboard.length; ++i)
         {
@@ -578,7 +595,6 @@ function RemoveFromBoard(elem, putonside = true)
                     if(blackbottom) setaside(leftsideboard, elem);
                     else setaside(rightsideboard, elem);
                 }
-                return;
             }
         }
         if(blackbottom)
@@ -587,6 +603,7 @@ function RemoveFromBoard(elem, putonside = true)
             {
                 if(MYpieces[i].pieceid == elem.children.item(0).id) 
                 {
+                    //console.error("Removing MYpiece id is: " + MYpieces[i].pieceid);
                     MYpieces.splice(i, 1);
                     break;
                 }
@@ -597,10 +614,14 @@ function RemoveFromBoard(elem, putonside = true)
         }
         else
         {
+           // console.log("blackbottom: " + blackbottom);
             for(let i = 0; i < OpponentsPieces.length; ++i)
             {
+               // console.log("team id is: " + elem.id + " blackbottom is false");
+               // console.error("OpponentsPieces id " + OpponentsPieces[i].pieceid + " == elem.children.item(0).id" + elem.children.item(0).id);
                 if(OpponentsPieces[i].pieceid == elem.children.item(0).id) 
                 {
+                   // console.error("Removing OpponentsPieces id is: " + OpponentsPieces[i].pieceid);
                     OpponentsPieces.splice(i, 1);
                     break;
                 }
@@ -862,6 +883,7 @@ class Moves{
     hl = [];
     theorticalmoveshor = [];
     theorticalmovesdia = [];
+    pastkingmoves = [];
     castlemoves = [];
     directions = [];
     king = false;
@@ -917,6 +939,7 @@ class Moves{
         this.directions.push(this.hl);
         this.directions.push(this.theorticalmoveshor);
         this.directions.push(this.theorticalmovesdia);
+        this.directions.push(this.pastkingmoves);
         this.directions.push(this.castlemoves);
     }
 
@@ -939,7 +962,6 @@ class Moves{
             return true;
         }
 
-        if(this.IsBishop()) console.error("this.directions.length - FirstEight " + this.directions.length - FirstEight);
         for(let i = 0; i < this.directions.length - FirstEight; ++i)
         {
             for(let j = 1; j < this.directions[i].length; ++j)
@@ -948,17 +970,20 @@ class Moves{
                 if(id == this.directions[i][j]) return false;
             }
         }
-        if(this.IsBishop()) console.error("this.directions[theomovedia].length " + this.directions[theomovedia].length);
+
         for(let i = 0; i < this.directions[theomovedia].length; ++i)
         {
-            if(this.IsBishop()) console.error("this.directions[theomovedia][i] " + this.directions[theomovedia][i] + " == id " + id );
             if(this.directions[theomovedia][i] == id) return false;
         }
-        if(this.IsBishop()) console.error("this.directions[theomovehor].length " + this.directions[theomovehor].length);
+
         for(let i = 0; i < this.directions[theomovehor].length; ++i)
         {
-            if(this.IsBishop()) console.error("this.directions[theomovehor][i] " + this.directions[theomovehor][i] + " == id " + id );
             if(this.directions[theomovehor][i] == id) return false;
+        }
+
+        for(let i = 0; i < this.directions[PKM].length; ++i)
+        {
+            if(this.directions[PKM][i] == id) return false;
         }
 
         return true;
@@ -1058,6 +1083,8 @@ class Moves{
 
 class Dia_vh_Moves extends Moves{
     onemove = false;
+    //past king moves boolean...
+    pkm = false;
     constructor(num)
     {
         super(num);
@@ -1080,9 +1107,11 @@ class Dia_vh_Moves extends Moves{
 
         row = parseInt(spot.toString().slice(0,1));
         col = parseInt(spot.toString().slice(1,2));
+
         for(let iteration = 1; iteration < 5; ++iteration)
         {
             this.onemove = false;
+            this.pkm = false;
             this.directions[iteration - 1].push(spot);
             this.DiaMoves(this.Rowincrement(row, iteration), this.Colincrememt(col, iteration), team, kingmove, moves_available, theoretical, iteration);
         }
@@ -1111,7 +1140,7 @@ class Dia_vh_Moves extends Moves{
                     {
                         next.classList.add('moves');
                     }
-                    this.directions[this.directions.length - 2].push(next.id);
+                    this.directions[theomovedia].push(next.id);
                     this.moves.push(next.id);
                     return;
                 }
@@ -1140,13 +1169,21 @@ class Dia_vh_Moves extends Moves{
                 next.classList.add('moves');
             }
 
-            this.directions[iteration - 1].push(next.id);
-            this.moves.push(next.id);
-            return;
+            if(!this.pkm)
+            {
+                this.directions[iteration - 1].push(next.id);
+                this.moves.push(next.id);
+            }
+            else{
+                this.directions[PKM].push(next.id);
+            }
+
+            
             if(theoretical && (next.children.item(0).children.item(0).id === 'lk' || theoretical && next.children.item(0).children.item(0).id === 'dk'))
             {
                 if(!kingmove)
                 {
+                    this.pkm = true;
                     this.DiaMoves(this.Rowincrement(row, iteration), this.Colincrememt(col, iteration), team, kingmove, moves_available, theoretical, iteration);
                 }
                 return;
@@ -1172,8 +1209,15 @@ class Dia_vh_Moves extends Moves{
             next.classList.add('moves');
         }
 
-        this.directions[iteration - 1].push(next.id);
-        this.moves.push(next.id);
+        if(!this.pkm)
+        {
+            this.directions[iteration - 1].push(next.id);
+            this.moves.push(next.id);
+        }
+        else{
+            this.directions[PKM].push(next.id);
+        }
+
         if(!kingmove)
         {
             this.DiaMoves(this.Rowincrement(row, iteration), this.Colincrememt(col, iteration), team, kingmove, moves_available, theoretical, iteration);
@@ -1263,6 +1307,7 @@ class Dia_vh_Moves extends Moves{
         for(let iteration = 1; iteration < 5; ++iteration)
         {
             this.onemove = false;
+            this.pkm = false;
             this.directions[iteration + 3].push(spot);
             this.HV_Moves(this.increment_hv_row(row, iteration), this.incremen_th_vcol(col, iteration), team, kingmove, moves_available, theoretical, iteration);
         }
@@ -1362,13 +1407,19 @@ class Dia_vh_Moves extends Moves{
                 next.classList.add('moves');
             }
 
-            this.directions[iteration + 3].push(next.id);
-            this.moves.push(next.id);
-            return;
+            if(!this.pkm)
+            {
+                this.directions[iteration + 3].push(next.id);
+                this.moves.push(next.id);
+            }
+            else{
+                this.directions[PKM].push(next.id);
+            }
             if(theoretical && next.children.item(0).children.item(0).id === 'lk' || theoretical && next.children.item(0).children.item(0).id === 'dk')
             {
                 if(!kingmove)
                 {
+                    this.pkm = true;
                     this.HV_Moves(this.increment_hv_row(row, iteration), this.incremen_th_vcol(col, iteration), team, kingmove, moves_available, theoretical, iteration);
                 }
                 return;
@@ -1396,8 +1447,15 @@ class Dia_vh_Moves extends Moves{
             next.classList.add('moves');
         }
 
-        this.directions[iteration + 3].push(next.id);
-        this.moves.push(next.id);
+        if(!this.pkm)
+        {
+            this.directions[iteration + 3].push(next.id);
+            this.moves.push(next.id);
+        }
+        else{
+            this.directions[PKM].push(next.id);
+        }
+
         if(!kingmove)
         {
             this.HV_Moves(this.increment_hv_row(row, iteration), this.incremen_th_vcol(col, iteration), team, kingmove, moves_available, theoretical, iteration);
@@ -2785,6 +2843,7 @@ function SetListeners(elem)
                 if(focusenter.children.length)
                 {
                     socket.emit('take-piece', (focusenter.children.item(0).children.item(0).id));
+                    console.error("Right Before RemoveFromBoard in Dragend@@@");
                     RemoveFromBoard(focusenter.children.item(0));
                 }
 
@@ -3084,6 +3143,7 @@ socket.on('remove-piece', (data) =>{
         return;
     }
 
+    console.error("Right Before RemoveFromBoard in removepiece");
     RemoveFromBoard(cpparent);
   //  parent.removeChild(cpparent);
 });

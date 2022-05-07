@@ -447,22 +447,69 @@ window.addEventListener('resize', (e) => {
     console.log("Exited window addevent listener :::::::::::::::::::::::::::::::::::::::");
 });
 
-function GetApposingTeamMoves(team)
+function GetRandomNum(max)
 {
-    if(team === 'light')
-    return blackmoves;
-
-    return whitemoves;
+    return Math.floor(Math.random() * max);
 }
 
-function GetApposingTeamPieces(team)
+function GetRightSide()
 {
-    if(team === 'light' && !blackbottom) return OpponentsPieces;
-    if(team === 'light' && blackbottom) return MYpieces;
-    if(team === 'dark' && !blackbottom) return MYpieces;
-    if(team === 'dark' && blackbottom) return OpponentsPieces;
-    console.error("No match in GetApposingTeamPieces! Team is: " + team);
-    return null;
+    while(true)
+    {
+        let rand = GetRandomNum(16);
+        let spot = '';
+        switch(rand)
+        {
+            case 0: spot = '19'; break;
+            case 1: spot =  '20'; break;
+            case 2: spot =  '29'; break;
+            case 3: spot = '30'; break;
+            case 4: spot = '39'; break;
+            case 5: spot = '40'; break;
+            case 6: spot = '49'; break;
+            case 7: spot = '50'; break;
+            case 8: spot = '59'; break;
+            case 9: spot = '60'; break;
+            case 10: spot = '69'; break;
+            case 11: spot = '70'; break;
+            case 12: spot = '79'; break;
+            case 13: spot = '80'; break;
+            case 14: spot = '89'; break;
+            case 15: spot = '90'; break;
+        }
+        let item = document.getElementById(spot);
+        if(!item.children.length) return item;
+    }
+}
+
+function GetLeftSide()
+{
+    while(true)
+    {
+        let rand = GetRandomNum(16);
+        let spot = '';
+        switch(rand)
+        {
+            case 0: spot = '01'; break;
+            case 1: spot =  '00'; break;
+            case 2: spot =  '020'; break;
+            case 3: spot = '02'; break;
+            case 4: spot = '030'; break;
+            case 5: spot = '03'; break;
+            case 6: spot = '040'; break;
+            case 7: spot = '04'; break;
+            case 8: spot = '050'; break;
+            case 9: spot = '05'; break;
+            case 10: spot = '060'; break;
+            case 11: spot = '06'; break;
+            case 12: spot = '070'; break;
+            case 13: spot = '07'; break;
+            case 14: spot = '080'; break;
+            case 15: spot = '08'; break;
+        }
+        let item = document.getElementById(spot);
+        if(!item.children.length) return item;
+    }
 }
 
 function CheckingKingMove(team, id)
@@ -499,16 +546,25 @@ function GetNewQueenID(array, team)
     return id + count.toString();
 }
 
-function setaside(array, piece)
+function setaside(array, piece, rightleft)
 {
+    let spot = null;
+    if(rightleft) spot = GetRightSide()
+    else spot = GetLeftSide();
+    spot.appendChild(piece);
+    /*
+    console.log("array.length: " + array.length);
     for(let i = 0; i < array.length; ++i)
     {
+        console.error("i is " + i);
         if(!array[i].children.length)
         {
+            console.error("has no children");
             array[i].appendChild(piece);
             return;
         }
-    }
+        console.error("has child " + array[i].children.item(0).id);
+    }*/
 }
 
 function RemoveItemMyInCheckArray(id)
@@ -558,7 +614,7 @@ function RemoveFromBoard(elem, putonside = true)
                     break;
                 }
             }
-            if(putonside) setaside(rightsideboard, elem);
+            if(putonside) setaside(rightsideboard, elem, true);
             return;
         }
         else
@@ -576,7 +632,7 @@ function RemoveFromBoard(elem, putonside = true)
                 }
             }
             RemoveItemMyInCheckArray(elem.children.item(0).id);
-            if(putonside) setaside(leftsideboard, elem);
+            if(putonside) setaside(leftsideboard, elem, false);
             return;
         }
     }
@@ -590,11 +646,6 @@ function RemoveFromBoard(elem, putonside = true)
                 blackonboard.splice(i, 1);
                 elem.parentElement.removeChild(elem);
                 blackoffboard.push(elem);
-                if(putonside)
-                {
-                    if(blackbottom) setaside(leftsideboard, elem);
-                    else setaside(rightsideboard, elem);
-                }
             }
         }
         if(blackbottom)
@@ -609,7 +660,7 @@ function RemoveFromBoard(elem, putonside = true)
                 }
             }
             RemoveItemMyInCheckArray(elem.children.item(0).id);
-            if(putonside) setaside(leftsideboard, elem);
+            if(putonside) setaside(leftsideboard, elem, false);
             return;
         }
         else
@@ -626,7 +677,7 @@ function RemoveFromBoard(elem, putonside = true)
                     break;
                 }
             }
-            if(putonside) setaside(rightsideboard, elem);
+            if(putonside) setaside(rightsideboard, elem, true);
             return;
         }
     }
@@ -869,6 +920,57 @@ if(socket.connected)
     movesbutton.style.width = '30px';
     document.getElementById('title').innerText = 'Joined Room: ' + Player.room;
     alert("You connected to room " + Player.room);
+}
+
+class KingsDecision{
+    spot = ''
+    row = 1;
+    col = 4
+    king = null;
+    diaRD = 0;
+    diaRU = 1;
+    diaLD = 2;
+    diaLU = 3;
+    horR = 4;
+    horL = 5
+    verD = 6
+    verU = 7;
+    eightangles = [];
+    mypiecesperangle = [];
+    theirpiecesperangle = [];
+
+    findpiecedirection(id)
+    {
+        let angle = null;
+        idrow = parseInt(this.spot.substr(0, 1));
+        idcol = parseInt(this.spot.substr(1, 2));
+        if(idcol == col)
+        {
+            if(idrow > this.row) angle = this.eightangles[this.verD];
+            else angle = this.eightangles[verU];
+        }
+        else if(idrow == this.row)
+        {
+            if(idcol > this.col) angle = this.eightangles[this.horR];
+            else this.eightangles[horL];
+        }
+        else if(idrow > this.row)
+        {
+            if(idcol > this.col) angle = this.eightangles[this.diaRD];
+            else angle = this.eightangles[this.diaLD]
+        }
+        else if(idrow < this.row)
+        {
+            if(idcol > this.col) angle = this.eightangles[this.diaRU];
+            else angle = this.eightangles[this.diaLU];
+        }
+        if(!angle)
+        {
+            console.error("angle is null in FindPiecedirection:::");
+            return;
+        }
+
+    }
 }
 
 class Moves{
@@ -2088,7 +2190,7 @@ class Pawn extends Moves{
                 {
                     diag.classList.add('moves');
                 }
-                this.AddTheoreticalMoveDia(diag.id, true);
+                this.AddMovesForPawn(diag.id, true);
                 this.moves.push(diag.id);
             }
 

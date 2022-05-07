@@ -92,7 +92,9 @@ class roominfo{
     {
         if(this.player2.socketid === sock_id)
         {
+            console.log("removed player2 in RemovePlayer");
             this.roomsize--;
+            console.log("roomsize is: " + this.roomsize);
             this.player2.erase();
             return {
                 room: this.room,
@@ -101,7 +103,9 @@ class roominfo{
         }
         if(this.player1.socketid === sock_id)
         {
+            console.log("removed player1 in RemovePlayer");
             this.roomsize--;
+            console.log("roomsize is: " + this.roomsize);
             this.player1.erase();
             return {
                 room: this.room,
@@ -119,9 +123,11 @@ class roominfo{
     {
         if(!this.player1.active && !this.player2.active)
         {
+            console.log("room is empty in RoomEmpty");
             return true;
         }
 
+        console.log("room is not empty in RoomEmpty");
         return false;
     }
 

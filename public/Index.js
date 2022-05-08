@@ -3527,5 +3527,9 @@ socket.on('you-win',(something) => {
     lock = true;
 });
 
+socket.on('reconnect_fail', (message) => {
+    alert(message);
+});
+
 
 

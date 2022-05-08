@@ -1,6 +1,7 @@
 const deploy = 'http://chessgames.herokuapp.com';
 const local = 'localhost:8080';
 const express = require('express');
+const { SocketAddress } = require('net');
 const path = require('path');
 const app = express();
 const server = require('http').Server(app);
@@ -256,6 +257,7 @@ io.on('connection', (socket) =>{
                     p = roomholder[index].GetPlayerStatusTeam();
                     if(!roomholder[index].AddPlayer(player.PlayerName, socket.id, p.team))
                     {
+                        io.to(socket.id).emit("reconnect_fail", "Cannot connect due to room being full but most likely because something is wrong");
                         console.log("socket cannot connect, room is full!!!");
                         return;
                     }

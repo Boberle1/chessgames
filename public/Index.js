@@ -32,6 +32,7 @@ let Opponent = "Person";
 let status = document.getElementById('p');
 let check = false;
 let numofcheckmoves = 0;
+let mychesspiece = null;
 
 //index in off theoretical move horizontal array in Moves.directions array...
 let theomovehor = 8;
@@ -882,6 +883,7 @@ socket.on('connect', () =>{
     if(socket.connected)
     {
         document.getElementById('title').innerText = 'Joined Room: ' + Player.room;
+        console.log("IN socket.on connect ");
         alert("You connected to room " + Player.room);
     }
 });
@@ -899,6 +901,7 @@ socket.on('leaveroom', (message) => {
 socket.on('enterroom', (Obj) => {
     Opponent = Obj.Name;
     alert(Obj.sentence);
+    console.log("IN socket.on enterroom ");
     return;
 });
 
@@ -922,55 +925,20 @@ if(socket.connected)
     alert("You connected to room " + Player.room);
 }
 
-class KingsDecision{
-    spot = ''
-    row = 1;
-    col = 4
-    king = null;
-    diaRD = 0;
-    diaRU = 1;
-    diaLD = 2;
-    diaLU = 3;
-    horR = 4;
-    horL = 5
-    verD = 6
-    verU = 7;
-    eightangles = [];
-    mypiecesperangle = [];
-    theirpiecesperangle = [];
-
-    findpiecedirection(id)
+function KingsDecision(currentspot, proposedmove)
+{
+    console.error(OpponentsPieces.length)
+    for(let i = 0; i < OpponentsPieces.length; ++i)
     {
-        let angle = null;
-        idrow = parseInt(this.spot.substr(0, 1));
-        idcol = parseInt(this.spot.substr(1, 2));
-        if(idcol == col)
+        console.error("OpponentsPieces[i]id: " +  OpponentsPieces[i].pieceid + " currentspot: " + currentspot + " proposedmove: " + proposedmove);
+        if(OpponentsPieces[i].moves.IsMovingIntoCheck(currentspot, proposedmove)) 
         {
-            if(idrow > this.row) angle = this.eightangles[this.verD];
-            else angle = this.eightangles[verU];
+            console.error("returning false in KingsDecision");
+            return false;
         }
-        else if(idrow == this.row)
-        {
-            if(idcol > this.col) angle = this.eightangles[this.horR];
-            else this.eightangles[horL];
-        }
-        else if(idrow > this.row)
-        {
-            if(idcol > this.col) angle = this.eightangles[this.diaRD];
-            else angle = this.eightangles[this.diaLD]
-        }
-        else if(idrow < this.row)
-        {
-            if(idcol > this.col) angle = this.eightangles[this.diaRU];
-            else angle = this.eightangles[this.diaLU];
-        }
-        if(!angle)
-        {
-            console.error("angle is null in FindPiecedirection:::");
-            return;
-        }
-
     }
+    console.error("returning true in KingsDecision");
+    return true; 
 }
 
 class Moves{
@@ -988,6 +956,10 @@ class Moves{
     pastkingmoves = [];
     castlemoves = [];
     directions = [];
+
+    // the following array is for making sure player can not move himself in check...
+    AoA = [];
+    
     king = false;
     queen = false;
     bishop = false;
@@ -1026,7 +998,7 @@ class Moves{
         }
         this.moves = [];
         for(let i = 0; i < this.directions.length; ++i) this.directions[i] = [];
-        
+        this.AoA = [];
     }
 
     InitDirections()
@@ -1045,11 +1017,32 @@ class Moves{
         this.directions.push(this.castlemoves);
     }
 
+    IsMovingIntoCheck(start, end)
+    {
+        let isinline = false;
+        let isoutofline = true;
+    //    console.error("this.AoA.length: " + this.AoA.length);
+        for(let i = 0; i < this.AoA.length; ++i)
+        {
+    //        console.error("this.AoA[i]: " + this.AoA[i] + " == end: " + end );
+    //        console.error("this.AoA[i]: " + this.AoA[i] + " == start: " + start );
+            if(this.AoA[i] == end) isoutofline = false;
+            if(this.AoA[i] == start) isinline = true;
+        }
+
+    //    console.error("isinline: " + isinline + " isoutofline: " + isoutofline);
+        if(isinline && isoutofline) console.error("Returning true!");
+        if(isinline && isoutofline) return true;
+
+    //    console.error("returning false!");
+        return false;
+    }
+
     CheckKingMove(id)
     {
         if(this.IsPawn())
         {
-            console.log(this.directions);
+//            console.log(this.directions);
             for(let i = 0; i < 4; ++i)
             {
                 for(let j = 1; j < this.directions[i].length; ++ i)
@@ -1068,7 +1061,7 @@ class Moves{
         {
             for(let j = 1; j < this.directions[i].length; ++j)
             {
-                console.error("id " + id + " == this.directions[i][j] " + this.directions[i][j]);
+//                console.error("id " + id + " == this.directions[i][j] " + this.directions[i][j]);
                 if(id == this.directions[i][j]) return false;
             }
         }
@@ -1118,6 +1111,72 @@ class Moves{
         for(let i = 0; i < this.directions.length - FirstEight; ++i)
         {
             this.directions[i].push(id);
+        }
+    }
+
+    CancelAoA()
+    {
+        this.AoA = [];
+    }
+
+    Add_AoA(id)
+    {
+        console.log("Add_AoA(" + id + ")");
+        this.AoA.push(id);
+    }
+
+    ConsolidateAoA()
+    {
+        if(!this.AoA.length) return;
+
+        let aoa = [];
+        let found = false;
+        for(let i = 0; i < this.directions.length - FirstEight; ++i)
+        {
+     //       console.error("found: " + found + " i: " + i);
+            if(found) break;
+            for(let j = 0; j < this.directions[i].length; ++j)
+            {
+    //            console.error("found: " + found + " j: " + j);
+                if(found) break;
+                for(let k = 0; k < this.AoA.length; ++k)
+                {
+    //                console.error("AoA[k] " + this.AoA[k] + " == this.directions[i][j] " + this.directions[i][j]);
+                    if(this.AoA[k] == this.directions[i][j]) 
+                    {
+                        aoa = this.directions[i];
+                        found = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        console.error("found is: " + found);
+        if(!found) return;
+
+        let iter = 0;
+        console.log(aoa);
+        for(let i = 0; i < aoa.length; ++i)
+        { let bool = true;
+       //     console.error("for aoa i: " + i + " aoa[i]: " + aoa[i]);
+        //    console.error("AoA.length: " + this.AoA.length);
+            for(let j = 0; j < this.AoA.length - iter; ++j)
+            {
+                console.error("AoA[j]: " + this.AoA[j] + " == aoa[i]: " + aoa[i])
+                if(this.AoA[j] == aoa[i]) 
+                {
+                    console.error("breaking...");
+                    bool = false;
+                    break;
+                }
+            }
+            if(bool)
+            {
+                console.error("pushing: " + aoa[i]);
+                ++iter;
+                this.AoA.push(aoa[i]);
+            }
         }
     }
 
@@ -1185,6 +1244,10 @@ class Moves{
 
 class Dia_vh_Moves extends Moves{
     onemove = false;
+
+    startspot = '';
+    //used for Extend function, if it hits two pieces before it finds the king then it no longer continues, this is for preventing a player from moving themselves in check...
+    piechit = 0;
     //past king moves boolean...
     pkm = false;
     constructor(num)
@@ -1210,6 +1273,7 @@ class Dia_vh_Moves extends Moves{
         row = parseInt(spot.toString().slice(0,1));
         col = parseInt(spot.toString().slice(1,2));
 
+        this.startspot = spot;
         for(let iteration = 1; iteration < 5; ++iteration)
         {
             this.onemove = false;
@@ -1217,6 +1281,46 @@ class Dia_vh_Moves extends Moves{
             this.directions[iteration - 1].push(spot);
             this.DiaMoves(this.Rowincrement(row, iteration), this.Colincrememt(col, iteration), team, kingmove, moves_available, theoretical, iteration);
         }
+
+        if(!kingmove && theoretical) this.ConsolidateAoA();
+    }
+
+    DIA_Extend(row, col, team, iteration)
+    {
+        if(!this.Check(row, col, iteration))
+        {
+            this.CancelAoA();
+            return;
+        }
+        let next = document.getElementById(row.toString() + col.toString());
+        if(next === null)
+        {
+            this.CancelAoA();
+            console.log("Next is null in diagnalRU!");
+            return;
+        }
+        if(next.children.length)
+        {
+            if((next.children.item(0).children.item(0).id == 'lk' || next.children.item(0).children.item(0).id == 'dk'))
+            {
+                if(team == next.children.item(0).children.item(0).ariaLabel)
+                {
+                    this.CancelAoA();
+                    return;
+                }
+                return;
+            }
+            this.CancelAoA();
+            return;
+            this.piechit++;
+            if(this.piecehit == 2) 
+            {
+                this.CancelAoA();
+                return;
+            }
+        }
+        this.Add_AoA(next.id);
+        this.DIA_Extend(this.Rowincrement(row, iteration), this.Colincrememt(col, iteration), team, iteration);
     }
 
     DiaMoves(row, col, team, kingmove, moves_available, theoretical, iteration)
@@ -1248,39 +1352,26 @@ class Dia_vh_Moves extends Moves{
                 }
                 return;
             }
+            /*
             if(kingmove)
             {
                 if(!CheckingKingMove(team, next.id)) return;
-                /*
-                console.log("KingMove is true");
-                let opposition = GetApposingTeamMoves(team);
-                console.error("opposition dia children");
-                console.log(opposition)
-                for(let i = 0; i < opposition.length; ++i)
-                {
-                    console.error("opposition[i] " + opposition[i] + " == next.id " + next.id);
-                    if(opposition[i] == next.id)
-                    {
-                        return;
-                    }
-                }*/
-            }
-            if(moves_available)
+            }*/
+            if(kingmove)
             {
-                console.log("Entered if(moves_available)");
-                next.classList.add('moves');
+                if(!CheckingKingMove(team, next.id)) return;
+
+                this.AddMove(next, moves_available, iteration - 1);
+                return;
             }
 
-            if(!this.pkm)
+            if(!theoretical) 
             {
-                this.directions[iteration - 1].push(next.id);
-                this.moves.push(next.id);
-            }
-            else{
-                this.directions[PKM].push(next.id);
+                if(!KingsDecision(this.startspot, next.id)) return;
             }
 
-            
+            this.AddMove(next, moves_available, iteration - 1);
+
             if(theoretical && (next.children.item(0).children.item(0).id === 'lk' || theoretical && next.children.item(0).children.item(0).id === 'dk'))
             {
                 if(!kingmove)
@@ -1290,35 +1381,26 @@ class Dia_vh_Moves extends Moves{
                 }
                 return;
             }
+            if(theoretical && !kingmove) 
+            {
+                this.Add_AoA(next.id);
+                this.DIA_Extend(this.Rowincrement(row, iteration), this.Colincrememt(col, iteration), team, iteration);
+            }
             return
         }
         if(kingmove)
         {
             if(!CheckingKingMove(team, next.id)) return;
-            /*
-            let opposition = GetApposingTeamMoves(team);
-            console.error("opposition dia");
-            console.log(opposition);
-            for(let i = 0; i < opposition.length; ++i)
-            {
-                console.error("opposition[i] " + opposition[i] + " == next.id " + next.id);
-                if(opposition[i] == next.id)
-                return;
-            }*/
-        }
-        if(moves_available)
-        {
-            next.classList.add('moves');
+
+            this.AddMove(next, moves_available, iteration - 1);
+            return;
         }
 
-        if(!this.pkm)
+        if(!theoretical) 
         {
-            this.directions[iteration - 1].push(next.id);
-            this.moves.push(next.id);
+            if(KingsDecision(this.startspot, next.id)) this.AddMove(next, moves_available, iteration - 1);
         }
-        else{
-            this.directions[PKM].push(next.id);
-        }
+        else this.AddMove(next, moves_available, iteration - 1);
 
         if(!kingmove)
         {
@@ -1406,6 +1488,7 @@ class Dia_vh_Moves extends Moves{
         let row = parseInt(spot.toString().slice(0,1));
         let col = parseInt(spot.toString().slice(1,2));
         this.onemove = false;
+        this.startspot = spot;
         for(let iteration = 1; iteration < 5; ++iteration)
         {
             this.onemove = false;
@@ -1417,7 +1500,7 @@ class Dia_vh_Moves extends Moves{
         {
             this.CastleMove(row, col, team, moves_available);
         }
-        return;
+        if(!kingmove && theoretical) this.ConsolidateAoA();
     }
 
     CastleMove(row, col, team, moves_available)
@@ -1461,10 +1544,72 @@ class Dia_vh_Moves extends Moves{
         this.CastleCheck(row, this.incremen_th_vcol(col, iter), iter, moves_available, team);
     }
 
+    HV_Extend(row, col, team, iteration)
+    {
+        if(!this.check_h_v(row, col, iteration))
+        {
+            console.log("Calling CancelAoA in HV_Extend because it is out of bounds... + " + row + "" + col);
+            this.CancelAoA();
+            return;
+        }
+        let next = document.getElementById(row.toString() + col.toString());
+        if(next === null)
+        {
+            this.CancelAoA();
+            console.log("Next is null in diagnalRU!");
+            return;
+        }
+        if(next.children.length)
+        {
+            console.log("Next spot has children; next.id: " + next.id + " child.id: " + next.children.item(0).children.item(0).id);
+            if((next.children.item(0).children.item(0).id == 'lk' || next.children.item(0).children.item(0).id == 'dk'))
+            {
+                if(team == next.children.item(0).children.item(0).ariaLabel)
+                {
+                    console.log("Calling CancelAoA in HV_Extend because it is this pieces king...");
+                    this.CancelAoA();
+                    return;
+                }
+                return;
+            }
+            console.log("Calling CancelAoA in HV_Extend because it is not a king in the next spot...");
+            this.CancelAoA();
+            return;
+            ++this.piechit;
+            if(this.piecehit == 1) 
+            {
+                this.CancelAoA();
+                return;
+            }
+        }
+        console.log("next spot has no children...");
+        this.Add_AoA(next.id);
+        console.log("recursively calling HV_Extend...");
+        this.HV_Extend(this.increment_hv_row(row, iteration), this.incremen_th_vcol(col, iteration), team, iteration);
+    }
+
+    AddMove(next, moves_available, index)
+    {
+        if(moves_available)
+        {
+            next.classList.add('moves');
+        }
+
+        if(!this.pkm)
+        {
+            this.directions[index].push(next.id);
+            this.moves.push(next.id);
+        }
+        else{
+            this.directions[PKM].push(next.id);
+        }
+    }
+
     HV_Moves(row, col, team, kingmove, moves_available, theoretical, iteration)
     {
         if(!this.check_h_v(row, col, iteration))
         {
+            console.log("row: " + row + " col: " + col + " is out of bounds");
             return;
         }
         let next = document.getElementById(row.toString() + col.toString());
@@ -1480,12 +1625,7 @@ class Dia_vh_Moves extends Moves{
                 if(theoretical && !this.onemove)
                 {
                     this.onemove = true;
-                    if(moves_available)
-                    {
-                        next.classList.add('moves');
-                    }
-                    this.directions[theomovehor].push(next.id);
-                    this.moves.push(next.id);
+                    this.AddMove(next, moves_available, theomovehor);
                     return;
                 }
                 return;
@@ -1493,17 +1633,16 @@ class Dia_vh_Moves extends Moves{
             if(kingmove)
             {
                 if(!CheckingKingMove(team, next.id)) return;
-                /*
-                let opposition = GetApposingTeamMoves(team);
-                console.error("opposition hor children");
-                console.log(opposition);
-                for(let i = 0; i < opposition.length; ++i)
-                {
-                    console.error("opposition[i] " + opposition[i] + " == next.id " + next.id);
-                    if(opposition[i] === next.id)
-                    return;
-                }*/
+
+                this.AddMove(next, moves_available, iteration + 3);
+                return;
             }
+            if(!theoretical) 
+            {
+                if(!KingsDecision(this.startspot, next.id)) return;
+            }
+            this.AddMove(next, moves_available, iteration + 3);
+            /*
             if(moves_available)
             {
                 next.classList.add('moves');
@@ -1516,7 +1655,7 @@ class Dia_vh_Moves extends Moves{
             }
             else{
                 this.directions[PKM].push(next.id);
-            }
+            }*/
             if(theoretical && next.children.item(0).children.item(0).id === 'lk' || theoretical && next.children.item(0).children.item(0).id === 'dk')
             {
                 if(!kingmove)
@@ -1526,24 +1665,26 @@ class Dia_vh_Moves extends Moves{
                 }
                 return;
             }
+            if(theoretical) 
+            {
+                this.Add_AoA(next.id);
+                this.HV_Extend(this.increment_hv_row(row, iteration), this.incremen_th_vcol(col, iteration), team, iteration);
+            }
             return
         }
         if(kingmove)
         {
-        
             if(!CheckingKingMove(team, next.id)) return;
-            /*
-            let opposition = GetApposingTeamMoves(team);
-            console.error("opposition hor");
-            console.log(opposition);
-            for(let i = 0; i < opposition.length; ++i)
-            {
-                console.error("opposition[i] " + opposition[i] + " == next.id " + next.id);
-                if(opposition[i] === next.id)
-                return;
-            }*/
-            
+            this.AddMove(next, moves_available, iteration);
+            return;
         }
+
+        if(!theoretical) 
+        {
+            if(KingsDecision(this.startspot, next.id)) this.AddMove(next, moves_available, iteration + 3);
+        }
+        else this.AddMove(next, moves_available, iteration + 3);
+        /*
         if(moves_available)
         {
             next.classList.add('moves');
@@ -1557,7 +1698,7 @@ class Dia_vh_Moves extends Moves{
         else{
             this.directions[PKM].push(next.id);
         }
-
+        */
         if(!kingmove)
         {
             this.HV_Moves(this.increment_hv_row(row, iteration), this.incremen_th_vcol(col, iteration), team, kingmove, moves_available, theoretical, iteration);
@@ -1657,254 +1798,9 @@ class Dia_vh_Moves extends Moves{
     }
 }
 
-/*
-class HorizontalMove extends diagnalmove{
-
-    onemove = false;
-    Get_HV_Moves(spot, team, kingmove = false, moves_available, theoretical)
-    {
-        if(spot === null)
-        {
-            console.log("Error spot passed to getmoves is null");
-            return;
-        }
-        if(team !== 'light' && team !== 'dark')
-        {
-            console.log("team in getmoves is not equal to light or dark! team is: " + team);
-            return;
-        }
-
-        let row = parseInt(spot.toString().slice(0,1));
-        let col = parseInt(spot.toString().slice(1,2));
-        this.onemove = false;
-        for(let iteration = 1; iteration < 5; ++iteration)
-        {
-            console.log("right before this.directions in getHormoves::::::::::::::::::::::::::::::::::::::::");
-            this.onemove = false;
-            this.directions[iteration + 3].push(spot);
-            this.HV_Moves(this.increment_hv_row(row, iteration), this.incremen_th_vcol(col, iteration), team, kingmove, moves_available, theoretical, iteration);
-        }
-        if(kingmove && !theoretical)
-        {
-            this.CastleMove(row, col, team);
-        }
-        return;
-    }
-
-    CastleMove(row, col, team)
-    {
-        let decrease = 2;
-        let increase = 1;
-        if(team == 'dark' || team == 'black')
-        {
-            if(Darkteam.king) return;
-            if(!Darkteam.rook1) this.CastleCheck(row, this.incremen_th_vcol(col, decrease), decrease);
-            if(!Darkteam.rook2) this.CastleCheck(row, this.incremen_th_vcol(col, increase), increase);
-            return;
-        }
-        if(team == 'white' || team == 'light')
-        {
-            if(Lightteam.king) return;
-            if(!Lightteam.rook1) this.CastleCheck(row, this.incremen_th_vcol(col, decrease), decrease);
-            if(!Lightteam.rook2) this.CastleCheck(row, this.incremen_th_vcol(col, increase), increase);
-            return;
-        }
-    }
-
-    CastleCheck(row, col, iter)
-    {
-        if(this.check_h_v(row, col)) return;
-        let next =  document.getElementById(row.toString() + col.toString());
-        console.log('row, col');
-        console.log(row + col);
-        if(col.toString() === '8' || col.toString() === '1')
-        {
-            next.classList.add('moves');
-            this.moves.push(next.id);
-            return;
-        }
-        if(next.children.length) return;
-        this.CastleCheck(row, this.incremen_th_vcol(col, iter), iter)
-    }
-
-    HV_Moves(row, col, team, kingmove, moves_available, theoretical, iteration)
-    {
-        if(!this.check_h_v(row, col, iteration))
-        {
-            return;
-        }
-        let next = document.getElementById(row.toString() + col.toString());
-        if(next === null)
-        {
-            console.log("Next is null in diagnalRU!");
-            return;
-        }
-        if(next.children.length)
-        {
-            if(next.children.item(0).children.item(0).ariaLabel === team)
-            {
-                if(theoretical && !this.onemove)
-                {
-                    this.onemove = true;
-                    if(moves_available)
-                    {
-                        next.classList.add('moves');
-                    }
-                    this.moves.push(next.id);
-                    return;
-                }
-                console.log("You hit the return because ths.onemove is used and necessary^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
-                return;
-            }
-            if(kingmove)
-            {
-                let opposition = GetApposingTeamMoves(team);
-                console.log(opposition);
-                for(let i = 0; i < opposition.length; ++i)
-                {
-                    if(opposition[i] === next.id)
-                    return;
-                }
-            }
-            if(moves_available)
-            {
-                next.classList.add('moves');
-            }
-
-            console.log("right before the first this.direction.push(" + next.id +")");
-            this.directions[iteration + 3].push(next.id);
-            this.moves.push(next.id);
-
-            if(theoretical && next.children.item(0).children.item(0).id === 'lk' || theoretical && next.children.item(0).children.item(0).id === 'dk')
-            {
-                if(!kingmove)
-                {
-                    this.HV_Moves(this.increment_hv_row(row, iteration), this.incremen_th_vcol(col, iteration), team, kingmove, moves_available, theoretical, iteration);
-                }
-                return;
-            }
-            return
-        }
-        if(kingmove)
-        {
-            let opposition = GetApposingTeamMoves(team);
-            console.log("diaglu opposition");
-            console.log(opposition);
-            for(let i = 0; i < opposition.length; ++i)
-            {
-                if(opposition[i] === next.id)
-                return;
-            }
-        }
-        if(moves_available)
-        {
-            next.classList.add('moves');
-        }
-
-        console.log("right before the second this.direction.push(" + next.id +")");
-        this.directions[iteration + 3].push(next.id);
-        this.moves.push(next.id);
-        if(!kingmove)
-        {
-            this.HV_Moves(this.increment_hv_row(row, iteration), this.incremen_th_vcol(col, iteration), team, kingmove, moves_available, theoretical, iteration);
-        }
-    }
-
-    increment_hv_row(row, iter)
-    {
-        console.log("This is a horizontal func increment row!!!");
-        switch(iter)
-        {
-            case 1: return row;
-            case 2: return row;
-            case 3: return row + 1;
-            case 4: return row - 1;
-            default: return row;
-        }
-    }
-
-    incremen_th_vcol(col, iter)
-    {
-        console.log("This is a horizontal func increment col!!!");
-        switch(iter)
-        {
-            case 1: return col + 1;
-            case 2: return col - 1;
-            case 3: return col;
-            case 4: return col;
-            default: return col;
-        }
-    }
-    
-    check_h_v(row, col, iteration)
-    {
-        let min = 1;
-        let max = 8;
-        if(iteration === 1)
-        {
-            if(row > max || row < min)
-            {
-                console.log("col is greater than max or less than min in Down HorizontalMoves! x is: " + col);
-                return false;
-            }
-
-            if(col > max)
-            {
-                return false;
-            }
-
-            return true;
-        }
-        if(iteration === 2)
-        {
-            if(row > max || row < min)
-            {
-                console.log("col is greater than max or less than min in Down HorizontalMoves! x is: " + col);
-                return false;
-            }
-
-            if(col < min)
-            {
-                return false;
-            }
-
-            return true;
-        }
-        if(iteration === 3)
-        {
-            if(col > max || col < min)
-            {
-                console.log("col is greater than max or less than min in Down HorizontalMoves! x is: " + col);
-                return false;
-            }
-
-            if(row > max)
-            {
-                return false;
-            }
-
-            return true;
-        }
-        if(iteration === 4)
-        {
-            if(col > max || col < min)
-            {
-                console.log("col is greater than max or less than min in Down HorizontalMoves! x is: " + col);
-                return false;
-            }
-
-            if(row < min)
-            {
-                return false;
-            }
-
-            return true;
-        }
-    }
-}
-*/
 class Knight extends Moves{
     checkmoves = 0
+    startspot = '';
     constructor(num)
     {
         super(num);
@@ -1925,6 +1821,7 @@ class Knight extends Moves{
         let row = parseInt(spot.toString().slice(0,1));
         let col = parseInt(spot.toString().slice(1,2));
 
+        this.startspot = spot;
         this.FillFirstPosition(spot);
         this.checkmoves = 0;
         this.KnightMove(row - 1, col - 2, team, moves_available, theoretical);
@@ -1975,6 +1872,25 @@ class Knight extends Moves{
                 }
                 return;
             }
+            else
+            {
+                if(!KingsDecision(this.startspot, next.id)) 
+                {
+                    ++this.checkmoves;
+                    return;
+                }
+                if(moves_available)
+                {
+                    next.classList.add('moves');
+                }
+                this.moves.push(next.id);
+                this.directions[this.checkmoves].push(next.id);
+            }
+        }
+        if(!KingsDecision(this.startspot, next.id)) 
+        {
+            ++this.checkmoves;
+            return;
         }
         if(moves_available)
         {
@@ -1991,6 +1907,7 @@ class Pawn extends Moves{
     {
         super(num);
     }
+    startspot = '';
     GetDiagMoves(spot, team, moves_available, theoretical)
     {
         if(spot === null)
@@ -2003,6 +1920,7 @@ class Pawn extends Moves{
             console.error("team in getmoves pawn is not equal to light or dark! team is: " + team);
             return;
         }
+
 
         let row = parseInt(spot.toString().slice(0,1));
         let col = parseInt(spot.toString().slice(1,2));
@@ -2044,7 +1962,7 @@ class Pawn extends Moves{
             console.error("team in getmoves pawn is not equal to light or dark! team is: " + team);
             return;
         }
-
+        this.startspot = spot;
         this.FillFirstPosition(spot);
         let row = parseInt(spot.toString().slice(0,1));
         let col = parseInt(spot.toString().slice(1,2));
@@ -2160,6 +2078,7 @@ class Pawn extends Moves{
             if(!forward.children.length)
             {
                 console.log("movesforward moves_available: " + moves_available)
+                if(!KingsDecision(this.startspot, forward.id)) return false;
                 if(moves_available)
                 {
                     forward.classList.add('moves');
@@ -2198,6 +2117,7 @@ class Pawn extends Moves{
             {
                 if(diag.children.item(0).children.item(0).ariaLabel !== team)
                 {
+                    if(!theoretical && !KingsDecision(this.startspot, diag.id)) return;
                     if(moves_available)
                     {
                         diag.classList.add('moves');
@@ -2459,7 +2379,8 @@ function GetNewMovesClass(id)
 function GetPieceMoves(elem, theoretical, team)
 {
     elem.moves.ClearMoves();
-    console.error("Pieceid in GetPieceMoves: " + elem.pieceid)
+    console.error("Pieceid in GetPieceMoves: " + elem.pieceid);
+    console.error("team in GetPieceMoves is: " + team);
     elem.moves.GetMoves(document.getElementById(elem.pieceid).parentElement.parentElement.id, team, false, theoretical);
   //  FindMoves(elem.children.item(0).id, elem.children.item(0).ariaLabel, false, theoretical);
     /*
@@ -2599,6 +2520,13 @@ function GetPieceMoves(elem, theoretical, team)
     /*}*/
 }
 
+function GetMyPieceMoves(elem, theoretical, team)
+{
+    elem.moves.ClearMoves();
+    console.error("Pieceid in GetMyPieceMoves: " + elem.pieceid);
+    elem.moves.GetMoves(document.getElementById(elem.pieceid).parentElement.parentElement.id, team, true, theoretical);
+}
+
 function GetApposingMoves(team)
 {
     whitemoves = [];
@@ -2714,6 +2642,15 @@ function SetListeners(elem)
                 return;
             }
 
+            mychesspiece = GetMyPiece(child.children.item(0).id)
+            if(!mychesspiece) 
+            {
+                console.error("mychesspiece is null in dragend after calling GetMyPiece!");
+                return;
+            }
+            console.log(mychesspiece);
+            GetMyPieceMoves(mychesspiece, false, child.children.item(0).ariaLabel);
+            return;
             if(child.children.item(0).id === 'lk' || child.children.item(0).id === 'dk')
             {
                 GetApposingMoves(child.children.item(0).ariaLabel);
@@ -2797,7 +2734,7 @@ function SetListeners(elem)
         {
             if(focusenter.id === chesspiecehome.id)
             {
-                let cp = GetPiece(chesspiece.children.item(0).className);
+                let cp = mychesspiece.moves; //GetPiece(chesspiece.children.item(0).className);
                 if(!cp)
                 {
                     console.log('cp is null in dragend!');
@@ -2816,7 +2753,8 @@ function SetListeners(elem)
                 console.log('chesspiecehome does not have a chess piece in dragend!!!');
                 return;
             }
-            let cp = GetPiece(chesspiece.children.item(0).className);
+
+            let cp = mychesspiece.moves;//GetPiece(chesspiece.children.item(0).className);
             if(!cp)
             {
                 console.log('cp in dragend in null!!!!');
@@ -3050,6 +2988,7 @@ function AssignPieces()
 
 function init()
 {
+    console.log("Got to init set listeners...");
         movesbutton.addEventListener('click', (e) => {
     
         if(availablemoves)
@@ -3063,6 +3002,7 @@ function init()
     });
     
     for(let i = 0; i < boardsquares.length; ++i) SetListeners(boardsquares[i]);
+    console.log("after set listeners");
     if(Player.team == 'black' || Player.team == 'dark')
     {
         blackbottom = true;
@@ -3379,14 +3319,17 @@ socket.on('send castle move', (obj) => {
 });
 
 socket.on('team-assigned', (team) => {
+    console.log("IN socket.on teamassigned ");
     if(firstconnection)
     {
         return;
     }
     Player = new playerinfo(Player.PlayerName, Player.room, team, socket.id);
+    console.log("Right before alert in teamassigned' ");
     alert('You are team ' + team);
     if(team == 'black')
     {
+        console.log("Right after team info in socket.on 'team assigned' ");
         firstconnection = true;
         Mirrorboard();
         SetboardTop('light');
@@ -3395,9 +3338,11 @@ socket.on('team-assigned', (team) => {
         return;
     }
 
+    console.log("Right after team info out of socket.on 'team assigned' ");
     firstconnection = true;
     SetboardTop('dark');
     SetboardBottom('light');
+    console.log("Right after setboardbottom outside of team-assigned");
     init();
 });
 
@@ -3473,6 +3418,7 @@ socket.on('queen-it', (obj) => {
 });
 
 socket.on('update-board', (boarddata) => {
+    freshboard = false;
     console.log('entered updata_board clientside');
     console.error("Right before wob board loops'''''''''")
     for(let i = 0; i < boarddata.wob.length; ++i)

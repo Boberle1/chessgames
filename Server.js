@@ -8,13 +8,14 @@ const io = require('socket.io')(server, {
     cors: {
        origin:[deploy]
     },
-    pingTimeout: 35000
 })
 var public = path.join(__dirname, 'public');
 const port = process.env.PORT || 8080;
 
 app.use('/', express.static('public'));
 app.enable('post');
+
+let notfound = '0';
 
 class playerinfo{
     playername = '';
@@ -206,7 +207,7 @@ function FindOppositePlayerID(sock_id)
     if(index === -1)
     {
         console.log('room index was not found in FindOppositePlayerID!');
-        return 0;
+        return '0';
     }
     return roomholder[index].GetOppositeId(sock_id);
 }
@@ -275,6 +276,7 @@ io.on('connection', (socket) =>{
             io.to(p.id).emit('check_state_of_board', ('status'));
             p = null;
         }
+        console.log("going into team assigned")
         io.to(socket.id).emit('team-assigned', (team));
         let Obj = {
             Name: player.PlayerName,
@@ -339,6 +341,11 @@ io.on('connection', (socket) =>{
         socket.in(room).emit('move-back', (obj));
     });
 
+    socket.on('disconnecting', (reason) => {
+        let room = FindRoom(socket.id);
+        console.log(socket.id + " is disconnecting from room: " + room);
+    });
+
     socket.on('disconnect', (reason) =>{
         let answer = DeletePlayer(socket.id);
         socket.in(answer.room).emit('leaveroom', answer.name + " disconnected because; " + reason);
@@ -354,7 +361,11 @@ io.on('connection', (socket) =>{
     socket.on('board_data', (data) => {
         console.log('entered board_data with socket.id: ' + socket.id);
         console.log(data);
-        io.to(FindOppositePlayerID(socket.id)).emit('update-board', (data)); 
+        let opposite = FindOppositePlayerID(socket.id);
+        if(opposite != notfound) io.to(opposite).emit('update-board', (data)); 
+        else{
+            let allrooms = GetAllRooms();
+        }
     });
 })
 

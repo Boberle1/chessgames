@@ -55,6 +55,21 @@ class map{
     piece = ''
 }
 
+class PawnToQueenMap{
+    pastid = ''; 
+    newid = '';
+    team = '';
+    constructor(pid, nid, t)
+    {
+        this.pastid = pid;
+        this.newid = nid;
+        this.team = t;
+    }
+}
+
+let MYpQ = [];
+let OpponentpQ = [];
+
 //used to map pieces where they start on board...
 let piecehome = [];
 
@@ -524,29 +539,60 @@ function CheckingKingMove(team, id)
     return true;
 }
 
+function GetPawnToQueenMap(team)
+{
+    if(blackbottom)
+    {
+        if(team === 'light') return OpponentpQ;
+        return MYpQ;
+    }
+    if(team === 'light') return MYpQ;
+    return OpponentpQ;
+}
+
 function GetTeamonBoard(team)
 {
     if(team === 'light')
     return whiteonboard;
+   // return whiteteam;
 
     return blackonboard;
 }
 
-function GetNewQueenID(array, team)
+function GetTeamOffBoard(team)
+{
+    if(team === 'light')
+    return whiteoffboard;
+
+    return blackoffboard;
+}
+
+function GetNewQueenID(team)
+{
+    let id = team === 'light' ? 'lq' : 'dq';
+    return id + GetPawnToQueenMap(team).length.toString();
+}
+
+/*
+function GetNewQueenID(arrayon, arrayoff, team)
 {
     let id = 'dq';
     if(team === 'light')
     id = 'lq';
     let count = 0;
-    for(let i = 0; i < array.length; ++i)
+    for(let i = 0; i < arrayon.length; ++i)
     {
-        if(array[i].children.item(0).id.substr(0, 2) == id) ++count;
+        if(arrayon[i].children.item(0).id.substr(0, 2) == id) ++count;
     }
 
-    if(!count) return id;
+    for(let i = 0; i < arrayoff.length; ++i)
+    {
+        if(arrayoff[i].children.item(0).id.substr(0, 2) == id) ++count;
+    }
+
     return id + count.toString();
 }
-
+*/
 function setaside(array, piece, rightleft)
 {
     let spot = null;
@@ -858,12 +904,17 @@ function Mirrorboard()
 
 function IsMoved(elem)
 {
+    let findpiece = false;
     for(let i = 0; i < piecehome.length; ++i)
     {
-        if(piecehome[i].piece == elem.children.item(0).id && piecehome[i].spot != elem.parentElement.id)
-        return true;
+        if(piecehome[i].piece == elem.children.item(0).id) 
+        {
+            findpiece = true;
+            if(piecehome[i].spot != elem.parentElement.id) return true;
+        }
     }
 
+    if(!findpiece) return true;
     return false;
 }
 
@@ -927,10 +978,9 @@ if(socket.connected)
 
 function KingsDecision(currentspot, proposedmove)
 {
-    console.error(OpponentsPieces.length)
     for(let i = 0; i < OpponentsPieces.length; ++i)
     {
-        console.error("OpponentsPieces[i]id: " +  OpponentsPieces[i].pieceid + " currentspot: " + currentspot + " proposedmove: " + proposedmove);
+       // console.error("OpponentsPieces[i]id: " +  OpponentsPieces[i].pieceid + " currentspot: " + currentspot + " proposedmove: " + proposedmove);
         if(OpponentsPieces[i].moves.IsMovingIntoCheck(currentspot, proposedmove)) 
         {
             console.error("returning false in KingsDecision");
@@ -1383,6 +1433,7 @@ class Dia_vh_Moves extends Moves{
             }
             if(theoretical && !kingmove) 
             {
+                if(this.AoA.length) return;
                 this.Add_AoA(next.id);
                 this.DIA_Extend(this.Rowincrement(row, iteration), this.Colincrememt(col, iteration), team, iteration);
             }
@@ -1575,12 +1626,6 @@ class Dia_vh_Moves extends Moves{
             console.log("Calling CancelAoA in HV_Extend because it is not a king in the next spot...");
             this.CancelAoA();
             return;
-            ++this.piechit;
-            if(this.piecehit == 1) 
-            {
-                this.CancelAoA();
-                return;
-            }
         }
         console.log("next spot has no children...");
         this.Add_AoA(next.id);
@@ -1667,6 +1712,7 @@ class Dia_vh_Moves extends Moves{
             }
             if(theoretical) 
             {
+                if(this.AoA.length) return;
                 this.Add_AoA(next.id);
                 this.HV_Extend(this.increment_hv_row(row, iteration), this.incremen_th_vcol(col, iteration), team, iteration);
             }
@@ -2249,11 +2295,10 @@ class BoardPieces
     {
         this.currentspot = spot;
     }
-    ReplaceMe(id, elem, spot)
+    ReplaceMe(id, elem)
     {
         this.pieceid = id;
         this.moves = elem;
-        this.currentspot = spot;
     }
 }
 
@@ -2271,26 +2316,117 @@ function UpDateOpponentsPieceMove(spot, id)
     }
 }
 
-function PawnToQueen(id, p, spot, pastid)
+function PtoQ(id, p, spot, pastid, whospiece)
 {
-    let pastpiece = GetMyPiece(pastid);
-    if(!pastpiece)
+    let cp = document.getElementById(id);
+    console.log(document);
+    console.log("id: " + id);
+    if(!cp) 
     {
-        console.log("Pastpiece is null in PawnToQueen!!!");
+        console.log("cp is null in PawnToQueen!. id is: " + id);
         return;
     }
-    pastpiece.ReplaceMe(id, p, spot);
+    let team = cp.ariaLabel;
+    cp.removeChild(cp.children.item(0));
+    cp.classList.replace(team + 'pawn', team + 'queen');
+    cp.id = id;
+    let image = document.createElement('img');
+    image.src = 'Chess_Pieces/sm' + team + 'queen.png';
+    image.ariaLabel = team;
+    cp.appendChild(image);
+    let h = (.75 * window.innerHeight) / 8;
+    h = parseInt(h.toString().substr(0, 2));
+    switchpiece(cp.parentElement.parentElement, h);
+
+
+    //if my piece
+    if(whospiece)
+    {
+        let pastpiece = GetMyPiece(pastid);
+        console.log("in pawn to queen right after using pastid");
+        if(!pastpiece)
+        {
+            console.log("Pastpiece is null in PawnToQueen!!!");
+            return;
+        }
+        MYpQ.push(new PawnToQueenMap(pastid, id, team));
+        pastpiece.ReplaceMe(id, p, spot);
+    }
+    else{
+        let op = GetOpponentsPiece(pastid);
+        if(!op)
+        {
+            console.log("op in OpponentPawnToQueen!!!");
+            return;
+        }
+        OpponentpQ.push(new PawnToQueenMap(pastid, id, team));
+        op.ReplaceMe(id, p, spot);
+    }
 }
 
-function OpponentPawnToQueen(id, p, spot, pastid)
+function PawnToQueen(id)
 {
+    let cp = document.getElementById(id);
+    console.log(document);
+    console.log("id: " + id);
+    if(!cp) 
+    {
+        console.error("cp is null in PawnToQueen!. id is: " + id);
+        return;
+    }
+    let team = cp.ariaLabel;
+    cp.removeChild(cp.children.item(0));
+    cp.classList.replace(team + 'pawn', team + 'queen');
+    let pastid = cp.id;
+    cp.id = GetNewQueenID(team);
+    let image = document.createElement('img');
+    image.src = 'Chess_Pieces/sm' + team + 'queen.png';
+    image.ariaLabel = team;
+    cp.appendChild(image);
+    let h = (.75 * window.innerHeight) / 8;
+    h = parseInt(h.toString().substr(0, 2));
+    switchpiece(cp.parentElement.parentElement, h);
+    console.log("in pawn to queen right before using pastid");
+    let pastpiece = GetMyPiece(pastid);
+    console.log("in pawn to queen right after using pastid");
+    if(!pastpiece)
+    {
+        console.error("Pastpiece is null in PawnToQueen!!!");
+        return;
+    }
+    MYpQ.push(new PawnToQueenMap(pastid, id, team));
+    pastpiece.ReplaceMe(cp.id, new Queen(2));
+    console.log("returnig from Pawn to queen")
+}
+
+function OpponentPawnToQueen(id)
+{
+    let cp = document.getElementById(id);
+    if(!cp) 
+    {
+        console.error("cp is null in OpponentPawnToQueen!. id is: " + id);
+        return;
+    }
+    let team = cp.ariaLabel;
+    cp.removeChild(cp.children.item(0));
+    cp.classList.replace(team + 'pawn', team + 'queen');
+    let pastid = cp.id;
+    cp.id = GetNewQueenID(team);
+    let image = document.createElement('img');
+    image.src = 'Chess_Pieces/sm' + team + 'queen.png';
+    image.ariaLabel = team;
+    cp.appendChild(image);
+    let h = (.75 * window.innerHeight) / 8;
+    h = parseInt(h.toString().substr(0, 2));
+    switchpiece(cp.parentElement.parentElement, h);
     let op = GetOpponentsPiece(pastid);
     if(!op)
     {
-        console.log("op in OpponentPawnToQueen!!!");
+        console.error("op in OpponentPawnToQueen!!!");
         return;
     }
-    op.ReplaceMe(id, p, spot);
+    OpponentpQ.push(new PawnToQueenMap(pastid, id, team));
+    op.ReplaceMe(cp.id, new Queen(2));
 }
 
 let king = new King(1);
@@ -2811,10 +2947,12 @@ function SetListeners(elem)
                     console.error("check is equal false");
 
                     chesspiecehome.removeChild(chesspiece);
+                    focusenter.appendChild(chesspiece);
 
                     if((focusenter.id.toString().slice(0,1) === '8' || focusenter.id.toString().slice(0,1) === '1') && (chesspiece.children.item(0).className == 'lightpawn' ||
                     chesspiece.children.item(0).className == 'darkpawn'))
                     {
+                        /*
                         let team = chesspiece.children.item(0).ariaLabel
                         let id = "lq";
                         if(team == 'dark') id = "dq";
@@ -2830,11 +2968,16 @@ function SetListeners(elem)
                         h = parseInt(h.toString().substr(0, 2));
                         focusenter.appendChild(chesspiece);
                         switchpiece(focusenter, h); 
-                        PawnToQueen(chesspiece.children.item(0).id, new Queen(2), focusenter.id, pastid);
+                        */
+                        let team = chesspiece.children.item(0).ariaLabel;
+                        let pastid = chesspiece.children.item(0).id;
+                        console.log("pastid: " + pastid);
+                        console.log("chesspiece.children.item(0).id: " + chesspiece.children.item(0).id);
+                        console.log("after change pastid: " + pastid);
+                        PawnToQueen(chesspiece.children.item(0).id);
                         socket.emit('queen-me', {T: team, id: pastid, nid: chesspiece.children.item(0).id});
                     }   
 
-                    focusenter.appendChild(chesspiece);
                     console.log("My new piece");
                     console.log(MYpieces[MYpieces.length-1]);
                     UpdateMySpot(chesspiece.id, focusenter.id);
@@ -2888,13 +3031,13 @@ function SetListeners(elem)
                 }
 
                 chesspiecehome.removeChild(chesspiece);
+                focusenter.appendChild(chesspiece);
                         
                 if((focusenter.id.toString().slice(0,1) === '8' || focusenter.id.toString().slice(0,1) === '1') && (chesspiece.children.item(0).className == 'lightpawn' ||
                 chesspiece.children.item(0).className == 'darkpawn'))
                 {
+                    /*
                     let team = chesspiece.children.item(0).ariaLabel
-                    let id = "lq";
-                    if(team == 'dark') id = "dq";
                     let pastid = chesspiece.children.item(0).id;
                     chesspiece.children.item(0).removeChild(chesspiece.children.item(0).children.item(0));
                     chesspiece.children.item(0).classList.replace(team + 'pawn', team + 'queen');
@@ -2907,10 +3050,18 @@ function SetListeners(elem)
                     h = parseInt(h.toString().substr(0, 2));
                     focusenter.appendChild(chesspiece);
                     switchpiece(focusenter, h); 
-                    PawnToQueen(chesspiece.children.item(0).id, new Queen(), focusenter.id, pastid);
+                    */
+                    let team = chesspiece.children.item(0).ariaLabel;
+                    let pastid = chesspiece.children.item(0).id;
+         //           console.log("pastid: " + pastid);
+         //           chesspiece.children.item(0).id = GetNewQueenID(GetTeamonBoard(team), GetTeamOffBoard(team), team);
+                    console.log("chesspiece.children.item(0).id: " + chesspiece.children.item(0).id)
+                    console.log("after change pastid: " + pastid);
+                    PawnToQueen(chesspiece.children.item(0).id);
+                    console.log("Right before socket.emit queenme");
                     socket.emit('queen-me', {T: team, id: pastid, nid: chesspiece.children.item(0).id});
                 }   
-                focusenter.appendChild(chesspiece);
+
                 UpdateMySpot(chesspiece.id, focusenter.id);
                 cp.ClearMoves();
                 lock = true;
@@ -3222,15 +3373,15 @@ socket.on('checkforcheck', (obj) => {
     let myking = document.getElementById(cp.pieceid);
     UpDateOpponentsPieceMove(obj.spot, obj.id);
     GetApposingMoves();
- //   console.log("After Getting OpposingMoves in checkforcheck!!!!!!!!!!");
+    console.log("After Getting OpposingMoves in checkforcheck!!!!!!!!!!");
     let angleofattack = [];
-    for(let i = 0; i < OpponentsPieces.length - 2; ++i)
+    for(let i = 0; i < OpponentsPieces.length; ++i)
     {
         for(let j = 0; j < OpponentsPieces[i].moves.directions.length - FirstEight; ++j)
         {
             for(let k = 0; k < OpponentsPieces[i].moves.directions[j].length; ++k)
             {
-    //            console.log(OpponentsPieces[i].moves.directions[j][k] + " == " + myking.parentElement.parentElement.id);
+                console.log(OpponentsPieces[i].moves.directions[j][k] + " == " + myking.parentElement.parentElement.id);
                 if(OpponentsPieces[i].moves.directions[j][k] == myking.parentElement.parentElement.id)
                 {
                     check = true;
@@ -3354,7 +3505,7 @@ socket.on('check_state_of_board', (message) => {
 
 socket.on('get_board_data', (message) => {
     console.log('entered get_board_data on clientside');
-    let obj = {wob: [], bob: [], w: [], b: [], pol: [], por: []};
+    let obj = {wob: [], bob: [], w: [], b: [], pol: [], por: [], mpq: [], opq: []};
     for(let i = 0; i < whiteonboard.length; ++i)
     {
         if(IsMoved(whiteonboard[i])) obj.wob.push(new map(whiteonboard[i].parentElement.id, whiteonboard[i].children.item(0).id));
@@ -3362,6 +3513,14 @@ socket.on('get_board_data', (message) => {
     for(let i = 0; i < blackonboard.length; ++i)
     {
         if(IsMoved(blackonboard[i])) obj.bob.push(new map(blackonboard[i].parentElement.id, blackonboard[i].children.item(0).id));
+    }
+    for(let i = 0; i < MYpQ.length; ++i)
+    {
+        obj.mpq.push({pastid: MYpQ[i].pastid, newid: MYpQ[i].newid, team: MYpQ[i].team});
+    }
+    for(let i = 0; i < OpponentpQ.length; ++i)
+    {
+        obj.opq.push({pastid: OpponentpQ[i].pastid, newid: OpponentpQ[i].newid, team: OpponentpQ[i].team});
     }
     for(let i = 0; i < whiteteam.length; ++i)
     {
@@ -3399,9 +3558,9 @@ socket.on('queen-it', (obj) => {
     let cp = document.getElementById(id);
     if(cp == null)
     {
-        console.log("cp is nullptr in socket.in(room).emit('queen-it)");
+        console.error("cp is nullptr in socket.in(room).emit('queen-it)");
         return;
-    }
+    }/*
     console.log(cp);
     cp.removeChild(cp.children.item(0));
     cp.classList.replace(team + 'pawn', team + 'queen');
@@ -3414,19 +3573,32 @@ socket.on('queen-it', (obj) => {
     h = parseInt(h.toString().substr(0, 2));
     switchpiece(cp.parentElement.parentElement, h);
     console.log(document.getElementById(obj.id));
-    OpponentPawnToQueen(obj.nid, new Queen(2), cp.parentElement.parentElement.id, id);
+    */
+    OpponentPawnToQueen(obj.id);
 });
 
 socket.on('update-board', (boarddata) => {
     freshboard = false;
     console.log('entered updata_board clientside');
-    console.error("Right before wob board loops'''''''''")
+    console.error("Right before wob board loops'''''''''");
+    let emptyspot = '';
+
+    for(let i = 0; i < boarddata.opq.length; ++i)
+    {
+        MYpQ.push(new PawnToQueenMap(boarddata.opq[i].pastid, boarddata.opq[i].newid, boarddata.opq[i].team));
+        PawnToQueen(boarddata.opq[i].pastid);
+    }
+    for(let i = 0; i < boarddata.mpq.length; ++i)
+    {
+        OpponentpQ.push(new PawnToQueenMap(boarddata.mpq[i].pastid, boarddata.mpq[i].newid, boarddata.mpq[i].team));
+        OpponentPawnToQueen(boarddata.mpq[i].pastid);
+    }
     for(let i = 0; i < boarddata.wob.length; ++i)
     {
         let cp = document.getElementById(boarddata.wob[i].piece).parentElement;
         let pastparent = cp.parentElement;
         if(boarddata.wob[i].spot == pastparent.id) continue;
-        pastparent.removeChild(cp);
+        if(pastparent) pastparent.removeChild(cp);
         let cpparent = document.getElementById(boarddata.wob[i].spot);
         cpparent.appendChild(cp);
     }
@@ -3436,7 +3608,7 @@ socket.on('update-board', (boarddata) => {
         let cp = document.getElementById(boarddata.bob[i].piece).parentElement;
         let pastparent = cp.parentElement;
         if(boarddata.bob[i].spot == pastparent.id) continue;
-        pastparent.removeChild(cp);
+        if(pastparent) pastparent.removeChild(cp);
         let cpparent = document.getElementById(boarddata.bob[i].spot);
         cpparent.appendChild(cp);
     }

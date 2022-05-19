@@ -2,7 +2,7 @@
 import {io} from 'socket.io-client';
 const deploy = 'http://chessgames.herokuapp.com';
 const local = 'localhost:8080';
-const socket = io(deploy);
+const socket = io(local);
 let board = document.getElementById('cb');
 let Square = document.getElementById("11");
 let home = document.getElementById("11");
@@ -42,6 +42,8 @@ let theomovedia = 9;
 //index for moves past the king to ensure he cant move backwards from angle of attack as he would still be in check...
 let PKM = 10;
 let FirstEight = 4;
+
+let castle = 11;
 
 console.log("We are in the right one!!!");
 
@@ -161,20 +163,8 @@ function Fillboardsquaresarray()
         item2 = item2 + 1;
     }
 }
+
 Fillboardsquaresarray();
-
-class MyAvailableMoves
-{
-    piece = null;
-    moves = [];
-    MyAvailabalMoves(elem, moves)
-    {
-        this.piece = elem;
-        this.moves = moves;
-    }
-}
-
-let MyMoves = [];
 
 class MyAvailableCheckMoves 
 {
@@ -550,68 +540,18 @@ function GetPawnToQueenMap(team)
     return OpponentpQ;
 }
 
-function GetTeamonBoard(team)
-{
-    if(team === 'light')
-    return whiteonboard;
-   // return whiteteam;
-
-    return blackonboard;
-}
-
-function GetTeamOffBoard(team)
-{
-    if(team === 'light')
-    return whiteoffboard;
-
-    return blackoffboard;
-}
-
 function GetNewQueenID(team)
 {
     let id = team === 'light' ? 'lq' : 'dq';
     return id + GetPawnToQueenMap(team).length.toString();
 }
 
-/*
-function GetNewQueenID(arrayon, arrayoff, team)
-{
-    let id = 'dq';
-    if(team === 'light')
-    id = 'lq';
-    let count = 0;
-    for(let i = 0; i < arrayon.length; ++i)
-    {
-        if(arrayon[i].children.item(0).id.substr(0, 2) == id) ++count;
-    }
-
-    for(let i = 0; i < arrayoff.length; ++i)
-    {
-        if(arrayoff[i].children.item(0).id.substr(0, 2) == id) ++count;
-    }
-
-    return id + count.toString();
-}
-*/
-function setaside(array, piece, rightleft)
+function setaside(piece, rightleft)
 {
     let spot = null;
     if(rightleft) spot = GetRightSide()
     else spot = GetLeftSide();
     spot.appendChild(piece);
-    /*
-    console.log("array.length: " + array.length);
-    for(let i = 0; i < array.length; ++i)
-    {
-        console.error("i is " + i);
-        if(!array[i].children.length)
-        {
-            console.error("has no children");
-            array[i].appendChild(piece);
-            return;
-        }
-        console.error("has child " + array[i].children.item(0).id);
-    }*/
 }
 
 function RemoveItemMyInCheckArray(id)
@@ -661,7 +601,7 @@ function RemoveFromBoard(elem, putonside = true)
                     break;
                 }
             }
-            if(putonside) setaside(rightsideboard, elem, true);
+            if(putonside) setaside(elem, true);
             return;
         }
         else
@@ -679,7 +619,7 @@ function RemoveFromBoard(elem, putonside = true)
                 }
             }
             RemoveItemMyInCheckArray(elem.children.item(0).id);
-            if(putonside) setaside(leftsideboard, elem, false);
+            if(putonside) setaside(elem, false);
             return;
         }
     }
@@ -707,7 +647,7 @@ function RemoveFromBoard(elem, putonside = true)
                 }
             }
             RemoveItemMyInCheckArray(elem.children.item(0).id);
-            if(putonside) setaside(leftsideboard, elem, false);
+            if(putonside) setaside(elem, false);
             return;
         }
         else
@@ -724,7 +664,7 @@ function RemoveFromBoard(elem, putonside = true)
                     break;
                 }
             }
-            if(putonside) setaside(rightsideboard, elem, true);
+            if(putonside) setaside(elem, true);
             return;
         }
     }
@@ -794,6 +734,14 @@ function GetPieceNameAndID(id)
             return { piecname: '', pieceid: '' };
         }
     }
+}
+
+function GetPieceName(id)
+{
+    let cp = document.getElementById(id);
+    let piecename = cp.className.toString();
+    piecename = cp.ariaLabel == 'light' ? piecename.toString().substr(5) : piecename.toString().substr(4);
+    return piecename;
 }
 
 function GetPiecesizename(h)
@@ -953,7 +901,12 @@ socket.on('enterroom', (Obj) => {
     Opponent = Obj.Name;
     alert(Obj.sentence);
     console.log("IN socket.on enterroom ");
+    socket.emit('my-name-is', (Player.PlayerName));
     return;
+});
+
+socket.on('hello', (opponentname) => {
+    Opponent = opponentname;
 });
 
 socket.on('roomfull', (message) => {
@@ -1111,7 +1064,7 @@ class Moves{
         {
             for(let j = 1; j < this.directions[i].length; ++j)
             {
-//                console.error("id " + id + " == this.directions[i][j] " + this.directions[i][j]);
+  //              console.error("id " + id + " == this.directions[i][j] " + this.directions[i][j]);
                 if(id == this.directions[i][j]) return false;
             }
         }
@@ -1126,8 +1079,10 @@ class Moves{
             if(this.directions[theomovehor][i] == id) return false;
         }
 
+        if(this.IsQueen()) console.error("this.directions[PKM].length: " + this.directions[PKM].length);
         for(let i = 0; i < this.directions[PKM].length; ++i)
         {
+            if(this.IsQueen()) console.error("this.directions[PKM][i]: " + this.directions[PKM][i] + " == id: " + id);
             if(this.directions[PKM][i] == id) return false;
         }
 
@@ -1421,6 +1376,7 @@ class Dia_vh_Moves extends Moves{
             }
 
             this.AddMove(next, moves_available, iteration - 1);
+            if(this.pkm) return;
 
             if(theoretical && (next.children.item(0).children.item(0).id === 'lk' || theoretical && next.children.item(0).children.item(0).id === 'dk'))
             {
@@ -1453,6 +1409,7 @@ class Dia_vh_Moves extends Moves{
         }
         else this.AddMove(next, moves_available, iteration - 1);
 
+        if(this.pkm) return;
         if(!kingmove)
         {
             this.DiaMoves(this.Rowincrement(row, iteration), this.Colincrememt(col, iteration), team, kingmove, moves_available, theoretical, iteration);
@@ -1687,20 +1644,8 @@ class Dia_vh_Moves extends Moves{
                 if(!KingsDecision(this.startspot, next.id)) return;
             }
             this.AddMove(next, moves_available, iteration + 3);
-            /*
-            if(moves_available)
-            {
-                next.classList.add('moves');
-            }
-
-            if(!this.pkm)
-            {
-                this.directions[iteration + 3].push(next.id);
-                this.moves.push(next.id);
-            }
-            else{
-                this.directions[PKM].push(next.id);
-            }*/
+            if(this.pkm) return;
+            
             if(theoretical && next.children.item(0).children.item(0).id === 'lk' || theoretical && next.children.item(0).children.item(0).id === 'dk')
             {
                 if(!kingmove)
@@ -1730,21 +1675,8 @@ class Dia_vh_Moves extends Moves{
             if(KingsDecision(this.startspot, next.id)) this.AddMove(next, moves_available, iteration + 3);
         }
         else this.AddMove(next, moves_available, iteration + 3);
-        /*
-        if(moves_available)
-        {
-            next.classList.add('moves');
-        }
-
-        if(!this.pkm)
-        {
-            this.directions[iteration + 3].push(next.id);
-            this.moves.push(next.id);
-        }
-        else{
-            this.directions[PKM].push(next.id);
-        }
-        */
+        
+        if(this.pkm) return;
         if(!kingmove)
         {
             this.HV_Moves(this.increment_hv_row(row, iteration), this.incremen_th_vcol(col, iteration), team, kingmove, moves_available, theoretical, iteration);
@@ -3296,10 +3228,10 @@ function AddKingInCheckMoves(id)
     if(id == 'lk' || id == 'dk')
     {
         
-        for(let j = 0; j < k.moves.directions[10].length; ++j)
+        for(let j = 0; j < k.moves.directions[castle].length; ++j)
         {
             console.log("in AddKingInCheckMoves checkmoves= " + numofcheckmoves);
-            AddToMyCheckMoves(id, k.moves.directions[10][j]);
+            AddToMyCheckMoves(id, k.moves.directions[castle][j]);
             console.log("in AddToMyCheckMoves after add from AddToMyCheckMoves checkmoves= " + numofcheckmoves);
         }
         
@@ -3375,6 +3307,7 @@ socket.on('checkforcheck', (obj) => {
     GetApposingMoves();
     console.log("After Getting OpposingMoves in checkforcheck!!!!!!!!!!");
     let angleofattack = [];
+    let piecename = '';
     for(let i = 0; i < OpponentsPieces.length; ++i)
     {
         for(let j = 0; j < OpponentsPieces[i].moves.directions.length - FirstEight; ++j)
@@ -3384,6 +3317,7 @@ socket.on('checkforcheck', (obj) => {
                 console.log(OpponentsPieces[i].moves.directions[j][k] + " == " + myking.parentElement.parentElement.id);
                 if(OpponentsPieces[i].moves.directions[j][k] == myking.parentElement.parentElement.id)
                 {
+                    if(!check) piecename = GetPieceName(OpponentsPieces[i].pieceid);
                     check = true;
                     angleofattack = OpponentsPieces[i].moves.directions[j];
                 }
@@ -3394,6 +3328,7 @@ socket.on('checkforcheck', (obj) => {
     numofcheckmoves = 0;
     if(check)
     {
+        socket.emit('put-me-in-check', {p: Player.PlayerName, piece: piecename});
     //    console.log("Entered check if statement%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
     //    console.log(angleofattack);
         //check for checkmate...
@@ -3457,6 +3392,10 @@ socket.on('checkforcheck', (obj) => {
     Opponent = obj.P.PlayerName;
   //  alert(obj.P.PlayerName + " moved their " + obj.Name + " to " + LandingSpot);
   
+});
+
+socket.on('you-checked-me', (obj) =>{
+    status.innerHTML = "You put " + obj.p + " in check with your " + obj.piece;
 });
 
 socket.on('send castle move', (obj) => {

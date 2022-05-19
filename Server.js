@@ -6,7 +6,7 @@ const app = express();
 const server = require('http').Server(app)
 const io = require('socket.io')(server, {
     cors: {
-       origin:[deploy]
+       origin:[local]
     },
 })
 var public = path.join(__dirname, 'public');
@@ -285,6 +285,10 @@ io.on('connection', (socket) =>{
         socket.in(player.room).emit('enterroom', (Obj));
     })
 
+    socket.on('my-name-is', (something) =>{
+        let room = FindRoom(socket.id);
+        socket.in(room).emit('hello', (something));
+    });
     socket.on('take-piece', (thing) =>{
         let answer = FindRoomandName(socket.id);
         socket.in(answer.room).emit('remove-piece', thing);
@@ -296,6 +300,11 @@ io.on('connection', (socket) =>{
         socket.in(room).emit('monitor-drag-in', (obj));
     });
 
+    socket.on('put-me-in-check', (something) =>{
+        console.log(something);
+        let room = FindRoom(socket.id);
+        socket.in(room).emit('you-checked-me', (something));
+    });
     
     socket.on('move finished', (obj) =>{
         console.log(obj);

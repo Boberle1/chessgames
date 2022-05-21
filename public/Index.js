@@ -30,6 +30,8 @@ let boardsquares = [];
 let firstconnection = false;
 let Opponent = "Person";
 let status = document.getElementById('p');
+let update = '';
+let parentstatus = document.getElementById('pdiv');
 let check = false;
 let numofcheckmoves = 0;
 let mychesspiece = null;
@@ -917,15 +919,15 @@ socket.on('roomfull', (message) => {
 
 if(socket.connected)
 {
-    let width = status.style.width.substr(0, width.length - 2);
-    console.log("Width************************************************************************************");
-    console.log(width)
-    let padding = (window.innerWidth/2) - (parseInt(width)/2);
-    status.style.paddingRight = padding;
-    status.style.marginRight = padding;
-    movesbutton.style.height = '20px';
-    movesbutton.style.width = '30px';
-    document.getElementById('title').innerText = 'Joined Room: ' + Player.room;
+   // let width = status.style.width.substr(0, width.length - 2);
+   // console.log("Width************************************************************************************");
+   // console.log(width)
+   // let padding = (window.innerWidth/2) - (parseInt(width)/2);
+   // status.style.paddingRight = padding;
+   // status.style.marginRight = padding;
+   // movesbutton.style.height = '20px';
+   // movesbutton.style.width = '30px';
+   // document.getElementById('title').innerText = 'Joined Room: ' + Player.room;
     alert("You connected to room " + Player.room);
 }
 
@@ -2797,9 +2799,12 @@ function SetListeners(elem)
         if(chesspiece.id == 'lt' && blackbottom) return;
         if(chesspiece.id == 'dt' && !blackbottom) return;
 
+        focusenter.classList.remove('drop');
+        console.error("Before entering ifstatement in Dragend " + focusenter.className);
         if(focusenter.className  === 'black moves' || focusenter.className === 'white moves' || focusenter.className === 'white' || focusenter.className === 'black' 
         || focusenter.className === 'black drag-over' || focusenter.className === 'white drag-over')
         {
+            console.error("After Entering ifstatement in Dragend " + focusenter.className);
             if(focusenter.id === chesspiecehome.id)
             {
                 let cp = mychesspiece.moves; //GetPiece(chesspiece.children.item(0).className);
@@ -2916,9 +2921,10 @@ function SetListeners(elem)
                     ClearAllMoves();
                     lock = true;
                     let piecename = chesspiece.children.item(0).className.toString();
-                    status.innerHTML = Opponent + "'s Move";
+                    update = Opponent + "'s Move";
+                    status.style.opacity = 0;
                     piecename = chesspiece.children.item(0).ariaLabel == 'light' ? piecename.toString().substr(5) : piecename.toString().substr(4);
-                    socket.emit('move finished', {P: Player, id: chesspiece.children.item(0).id, Name: piecename, spot: focusenter.id});
+                    socket.emit('move finished', {P: Player, id: chesspiece.children.item(0).id, Name: piecename, spot: focusenter.id, pspot: chesspiecehome.id});
                     freshboard = false;
                     HandleFirstMove(chesspiece);
                     return;
@@ -2949,7 +2955,8 @@ function SetListeners(elem)
                             HandleCastleMoveSpot(chesspiece.id, focusenter.id, rk.id, chesspiecehome.id);
                             cp.ClearMoves();
                             lock = true;
-                            status.innerHTML = Opponent + "'s Move";
+                            update = Opponent + "'s Move";
+                            status.style.opacity = 0;
                             socket.emit('castle move', {P: Player, king: chesspiece.children.item(0).id, rook: rk.children.item(0).id, rookhome: chesspiecehome.id, kinghome: focusenter.id});
                             return;  
                         }
@@ -2998,9 +3005,10 @@ function SetListeners(elem)
                 cp.ClearMoves();
                 lock = true;
                 let piecename = chesspiece.children.item(0).className.toString();
-                status.innerHTML = Opponent + "'s Move";
+                update = Opponent + "'s Move";
+                status.style.opacity = 0;
                 piecename = chesspiece.children.item(0).ariaLabel == 'light' ? piecename.toString().substr(5) : piecename.toString().substr(4);
-                socket.emit('move finished', {P: Player, id: chesspiece.children.item(0).id, Name: piecename, spot: focusenter.id});
+                socket.emit('move finished', {P: Player, id: chesspiece.children.item(0).id, Name: piecename, spot: focusenter.id, pspot: chesspiecehome.id});
                 freshboard = false;
                 HandleFirstMove(chesspiece);
                 return;
@@ -3027,6 +3035,7 @@ function SetListeners(elem)
         if(chesspiece.id == 'dt' && !blackbottom) return;
 
         e.preventDefault();
+        this.classList.remove('drop');
         console.log('this.id in Dragenter is: ' + this.id);
         console.log('this.className is: ' + this.className);
         if(this.className === 'black' || this.className === 'white' || this.className === 'white drag-over' || this.className === 'black drag-over' 
@@ -3058,6 +3067,33 @@ function SetListeners(elem)
         if(chesspiece.id == 'dt' && blackbottom) e.preventDefault();
     });
 }
+
+function whichTransitionEvent(){
+    var t;
+    var el = document.createElement('fakeelement');
+    var transitions = {
+      'transition':'transitionend',
+      'OTransition':'oTransitionEnd',
+      'MozTransition':'transitionend',
+      'WebkitTransition':'webkitTransitionEnd'
+    }
+
+    for(t in transitions){
+        if( el.style[t] !== undefined ){
+            return transitions[t];
+        }
+    }
+}
+ 
+let transitionevent = whichTransitionEvent();
+
+status.addEventListener('transitionend', function (e){
+    if(status.style.opacity == 1) return;
+    if(check) status.style.color = 'red';
+    else status.style.color = 'darkgrey';
+    status.innerHTML = update;
+    Fade();
+}, false);
 
 function AssignPieces()
 {
@@ -3176,6 +3212,22 @@ function GetMirror(first, second)
     }
 
     return first.toString() + second.toString();
+}
+
+function Fade()
+{
+    console.error("opacity: " + status.style.opacity);
+    if(status.style.opacity == 1)
+    {
+        console.error("opacity is 1 changing to 0");
+        status.style.opacity = 0;
+        return;
+    }
+    if(status.style.opacity == 0)
+    {
+        console.error("opacity is 0 changing to 1");
+        status.style.opacity = 1;
+    }
 }
 
 function AddToMyCheckMoves(id, spot)
@@ -3304,6 +3356,9 @@ socket.on('checkforcheck', (obj) => {
     let cp = GetMyKing();
     let myking = document.getElementById(cp.pieceid);
     UpDateOpponentsPieceMove(obj.spot, obj.id);
+   // let land = document.getElementById(obj.spot);
+   // land.classList.remove('drop');
+   // land.classList.add('drop');
     GetApposingMoves();
     console.log("After Getting OpposingMoves in checkforcheck!!!!!!!!!!");
     let angleofattack = [];
@@ -3381,21 +3436,27 @@ socket.on('checkforcheck', (obj) => {
             socket.emit('i-lost', ('You Win!'));
             return;
         }
-        status.innerHTML = obj.P.PlayerName  + " Put You in Check with thier " + obj.Name + ", Your Move";
-        alert(obj.P.PlayerName + " put you in check!");
+        update = obj.P.PlayerName  + " Put You in Check with thier " + obj.Name + ", Your Move";
+        status.style.opacity = 0;
+    //    alert(obj.P.PlayerName + " put you in check!");
         return;
     }
     
     
     let LandingSpot = blackbottom ? GetMirror(obj.spot.toString().substr(0,1), obj.spot.toString().substr(1,2)) : document.getElementById(obj.id).parentElement.parentElement.id;
-    status.innerHTML = obj.P.PlayerName + " moved their " + obj.Name + " to " + LandingSpot + ", Your Move";
+    console.error(status.style.opacity);
+    update = obj.P.PlayerName + " moved their " + obj.Name + " to " + LandingSpot + ", Your Move";
+    status.style.opacity = 0;
+    //status.innerHTML = obj.P.PlayerName + " moved their " + obj.Name + " to " + LandingSpot + ", Your Move";
+    console.error(status.style.opacity);
     Opponent = obj.P.PlayerName;
   //  alert(obj.P.PlayerName + " moved their " + obj.Name + " to " + LandingSpot);
   
 });
 
 socket.on('you-checked-me', (obj) =>{
-    status.innerHTML = "You put " + obj.p + " in check with your " + obj.piece;
+    update = "You put " + obj.p + " in check with your " + obj.piece;
+    status.style.opacity = 0;
 });
 
 socket.on('send castle move', (obj) => {

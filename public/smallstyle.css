@@ -84,7 +84,7 @@ html{
 body{
     background-image: linear-gradient(to right, #4707f8, #0e034b, #4507d6);
     max-width:100%;
-    width:auto
+ /*   width:auto*/
 }
 
 .notify{

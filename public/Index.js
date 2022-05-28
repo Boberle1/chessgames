@@ -3,8 +3,10 @@ import {io} from 'socket.io-client';
 const deploy = 'http://chessgames.herokuapp.com';
 const local = 'localhost:8080';
 const socket = io(deploy);
+let testpiece = document.getElementById('lk');
 let board = document.getElementById('cb');
 let Square = document.getElementById("11");
+let testSqure = document.getElementById('33');
 let home = document.getElementById("11");
 let movesbutton = document.getElementById('moves');
 let checkalert = document.getElementById('ny');
@@ -28,13 +30,24 @@ let blackteam = [];
 let whiteteam = [];
 let boardsquares = [];
 let firstconnection = false;
-let Opponent = "Person";
+let Opponent = "Other Player";
 let status = document.getElementById('p');
 let update = '';
 let parentstatus = document.getElementById('pdiv');
 let check = false;
 let numofcheckmoves = 0;
 let mychesspiece = null;
+let enemyspot = null;
+let enemypiece = null;
+
+let enemyPiece = {
+    piece: null,
+    position: null,
+    id: '',
+    x: 0, 
+    y: 0
+}
+
 
 //index in off theoretical move horizontal array in Moves.directions array...
 let theomovehor = 8;
@@ -46,6 +59,10 @@ let PKM = 10;
 let FirstEight = 4;
 
 let castle = 11;
+let large = false;
+let medium = false;
+let small = false;
+let extrasmall = false;
 
 console.log("We are in the right one!!!");
 
@@ -381,23 +398,68 @@ function ValidateCastleMove(elem)
     }
 }
 
+function SetPieceSize(num)
+{
+    switch(num)
+    {
+        case 1:
+        {
+            extrasmall = true;
+            large = small = medium = false;
+            return;
+        }
+        case 2:
+        {
+            small = true;
+            large = extrasmall = medium = false;
+            return; 
+        }
+        case 3:
+        {
+            medium = true;
+            large = extrasmall = small = false;
+            return; 
+        }
+        case 4:
+        {
+            large = true;
+            medium = extrasmall = small = false;
+            return; 
+        }
+    }
+}
+
+function GetPieceHeight()
+{
+        if(large) return 94;
+        if(medium) return 83;
+        if(small) return 60;
+        if(extrasmall) return 49;
+        console.error("returning 0");
+        return 0;
+}
+
 function switchpiece(elem, h)
 {
     let stringname = '';
     if(h < 62)
     {
         stringname = 'sms'
+        SetPieceSize(1);
     }
     else if(h < 85)
     {
         stringname = 'smr';
+        SetPieceSize(2);
     }
     else if(h < 152)
     {
         stringname = 'sm';
+        SetPieceSize(3);
     }
     else{
         stringname = '';
+        SetPieceSize(4);
     }
 
     let child = elem.children.item(0).children.item(0).children.item(0);
@@ -411,6 +473,26 @@ function switchpiece(elem, h)
     image.src = path
     image.ariaLabel = child.ariaLabel;
     elem.children.item(0).children.item(0).appendChild(image);
+}
+
+function findchar(s, ch)
+{
+    for(let t in s)
+    {
+        if(s[t] == ch) return t
+    }
+    return -1;
+}
+
+function roundtoint(num)
+{
+  //  console.error("roundtoint num: " + num);
+    let int = findchar(num.toString(), '.');
+ //   console.error("int: " + int)
+    if(int == -1) return num;
+    num = parseInt(num.toString().substr(0, int));
+ //   console.error('returning: ' + num);
+    return num;
 }
 
 window.addEventListener('resize', (e) => {
@@ -2451,7 +2533,11 @@ function GetPieceMoves(elem, theoretical, team)
     elem.moves.ClearMoves();
     console.error("Pieceid in GetPieceMoves: " + elem.pieceid);
     console.error("team in GetPieceMoves is: " + team);
-    elem.moves.GetMoves(document.getElementById(elem.pieceid).parentElement.parentElement.id, team, false, theoretical);
+    let thispiece = document.getElementById(elem.pieceid);
+    if(!thispiece)
+    elem.moves.GetMoves(enemyspot.id, team, false, theoretical);
+    else
+    elem.moves.GetMoves(thispiece.parentElement.parentElement.id, team, false, theoretical);
   //  FindMoves(elem.children.item(0).id, elem.children.item(0).ariaLabel, false, theoretical);
     /*
     if(elem.children.item(0).className === 'lightking' || elem.children.item(0).className === 'darkking')
@@ -2681,6 +2767,45 @@ function SetListeners(elem)
     let child = elem.firstElementChild;
     if(child !== null)
     {
+        child.addEventListener('drag',(e) => {
+        if(lock || IsPieceOffBoard(chesspiece))
+        {
+            return;
+        }
+        //    console.error(" e.clientX:" + e.clientX + " e.clientY:" + e.clientY);
+        //    console.log(this);
+            let rect = board.getBoundingClientRect()
+            let srect = Square.getBoundingClientRect();
+
+            let l = rect.left < 0 ? -1 * rect.left + srect.width * 2 : rect.left + srect.width * 2;
+            let right = rect.left < 0 ? -1 * rect.left + rect.right : rect.right;
+            let r = rect.right - srect.width * 2;
+
+            let t = rect.top;
+            let bottom = rect.top < 0 ? -1 * rect.top + rect.bottom : rect.bottom;
+            console.table(rect);
+            console.table(srect);
+            console.log("r: " + r);
+            console.log("e.pageX: " + e.pageX);
+            console.log("e.pageY: " + e.pageY);
+            console.log("e.clientX: " + e.clientX);
+            console.log("e.clientY: " + e.clientY);
+            console.log("left: " + right);
+            console.log("bottom: " + bottom);
+            console.log("win innerwidth: " + window.innerWidth);
+            console.log("win innerheight: " + window.innerHeight);
+            console.log("body.width: " + document.body.getBoundingClientRect().width);
+            console.log("body.bottom: " + document.body.getBoundingClientRect().bottom);
+            console.log("board.right: " + board.getBoundingClientRect().right);
+            console.log("board.bottom: " + board.getBoundingClientRect().bottom);
+            if(e.clientX > r || e.clientX < l) return;
+            if(e.clientY > bottom || e.clientY < t) return;
+            let xp = e.pageX / (right); 
+            let yp = (e.pageY) / (bottom);
+            console.log("xp " + xp);
+            console.log("yp " + yp);
+            socket.emit('moving', ({x: xp, y: yp, ww: rect.left, wh: rect.top, item: child.children.item(0).id}));
+        });
         child.addEventListener('dragstart', (e) => {
             if(lock)
             {
@@ -2807,6 +2932,7 @@ function SetListeners(elem)
             console.error("After Entering ifstatement in Dragend " + focusenter.className);
             if(focusenter.id === chesspiecehome.id)
             {
+                socket.emit('moved-back', {cp: chesspiece.id, sp: chesspiecehome.id});
                 let cp = mychesspiece.moves; //GetPiece(chesspiece.children.item(0).className);
                 if(!cp)
                 {
@@ -3053,10 +3179,10 @@ function SetListeners(elem)
             }
             htl.classList.add('drag-over');
         }
-        socket.emit('drag-in', ({
-            piece: chesspiece.children.item(0).id,
-            square: focusenter.id
-        }));
+ //       socket.emit('drag-in', ({
+  //          piece: chesspiece.children.item(0).id,
+  //          square: focusenter.id
+  //      }));
 
         console.log("What The fuck if you made it to this statement");
     });
@@ -3297,6 +3423,22 @@ function ClearMyCheckMoves()
     MyInCheckMovesArray = [];
 }
 
+let UpdatePosition = function(){
+    if(!enemyPiece.piece) enemyPiece.piece = document.getElementById(enemyPiece.id).parentElement;
+    if(!enemyPiece.position)
+    {
+     //   document.getElementById('s').
+        enemyPiece.position = enemyPiece.piece.parentElement;
+        enemyPiece.position.removeChild(enemyPiece.piece);
+        enemyPiece.piece.style.zIndex = 10;
+        board.appendChild(enemyPiece.piece);
+     //   document.body.appendChild(enemyPiece.piece);
+    }
+    enemyPiece.piece.style.position = 'absolute';
+    enemyPiece.piece.style.left = enemyPiece.x  + 'px'
+    enemyPiece.piece.style.top = enemyPiece.y + 'px';
+}
+
 socket.on('remove-piece', (data) =>{
     console.log("Move recieved to second board!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
     let cp = document.getElementById(data);
@@ -3340,17 +3482,27 @@ socket.on('monitor-drag-in', (obj) => {
 
 
 socket.on('move-back', (obj) => {
+    enemyPiece.piece.style.position = 'static'
+    enemyPiece.position.appendChild(enemyPiece.piece);
+    enemyPiece.piece = null;
+    enemyPiece.position = null;
+    /*
     let cp = document.getElementById(obj.cp);
     let cpparent = cp.parentElement;
     console.log(cp);
     let home = document.getElementById(obj.sp);
     let parent = cp.parentElement.parentElement;
     console.log(obj);
-    home.appendChild(cpparent);
+    home.appendChild(cpparent);*/
 });
 
 
 socket.on('checkforcheck', (obj) => {
+    console.error("appending to spot: " + obj.spot)
+    enemyPiece.piece.style.position = 'static';
+    document.getElementById(obj.spot).appendChild(enemyPiece.piece);
+    enemyPiece.piece = null;
+    enemyPiece.position = null;
     check = false;
     lock = false;
     let cp = GetMyKing();
@@ -3550,6 +3702,8 @@ socket.on('get_board_data', (message) => {
 });
 
 socket.on('queen-it', (obj) => {
+    enemyPiece.piece = null;
+    enemyPiece.position = null;
     console.log("entered queen-it::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
     console.log("queen-it obj!!!");
     console.log(obj);
@@ -3648,6 +3802,48 @@ socket.on('you-win',(something) => {
 socket.on('reconnect_fail', (message) => {
     alert(message);
 });
+
+socket.on('currentposition', (move) => {
+    console.error("move.x: " + move.x + " move.y: " + move.y);
+    let rect = board.getBoundingClientRect()
+    let srect = Square.getBoundingClientRect();
+
+    let ele = document.getElementById(move.item);
+    console.table(srect);
+    console.table(rect);
+    let l = rect.left + srect.width * 2;
+    let right = rect.left < 0 ? (-1 * rect.left + rect.right) + (window.innerWidth - move.winwidth) : rect.right// + (move.winwidth - window.innerWidth);
+  //  if(window.scrollX + rect.left < 0) right = (-1 * (window.scrollX + rect.left)) + right + ele.getBoundingClientRect().width;
+
+  //  right = right - ((document.body.getBoundingClientRect().width - board.getBoundingClientRect().width)/2);
+  //  right = right + ele.getBoundingClientRect().width * 2 + 4 + 10;
+    
+    let bottom = rect.top < 0 ? -1 * rect.top + rect.bottom : rect.bottom;
+    console.log("board.offseTop: " + board.offsetTop);
+    console.log("board.offsetLeft: " + board.offsetLeft);
+    console.log("win innerwidth: " + window.innerWidth);
+    console.log("win innerheight: " + window.innerHeight);
+    console.log("body.width: " + document.body.getBoundingClientRect().width);
+    console.log("body.bottom: " + document.body.getBoundingClientRect().bottom);
+    console.log("board.right: " + board.getBoundingClientRect().right);
+    console.log("board.bottom: " + board.getBoundingClientRect().bottom);
+    console.log("before enemyPiece.x: " + enemyPiece.x);
+    console.log("before enemyPiece.y: " + enemyPiece.y);
+    enemyPiece.x = ((1 - move.x) * right);
+    enemyPiece.y = ((1 - move.y) * bottom); /*- ele.children.item(0).getBoundingClientRect().height) *///- 50));
+    console.log("board.offsetTop: " + board.offsetTop);
+    console.log("rect.top: " + rect.top)
+    enemyPiece.y = enemyPiece.y; + (board.offsetTop);
+  //  enemyPiece.y = enemyPiece.y - ((window.innerHeight - rect.height) + (window.innerHeight - rect.bottom));
+    console.log("left: " + window.scrollX + rect.left);
+    console.log("top: " + window.scrollY + rect.top);
+    console.log("right: " + right);
+    console.log("bottom: " + bottom);
+    console.log("enemyPiece.x: " + enemyPiece.x);
+    console.log("enemyPiece.y: " + enemyPiece.y);
+    enemyPiece.id = move.item;
+    requestAnimationFrame(UpdatePosition);
+})
 
 
 

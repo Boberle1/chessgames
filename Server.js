@@ -284,11 +284,18 @@ io.on('connection', (socket) =>{
         };
         socket.in(player.room).emit('enterroom', (Obj));
     })
+    socket.on('moving', (move) => {
+    //    console.log("move:");
+    //    console.log(move);
+        let room = FindRoom(socket.id);
+        socket.in(room).emit('currentposition', (move));
+    });
 
     socket.on('my-name-is', (something) =>{
         let room = FindRoom(socket.id);
         socket.in(room).emit('hello', (something));
     });
+
     socket.on('take-piece', (thing) =>{
         let answer = FindRoomandName(socket.id);
         socket.in(answer.room).emit('remove-piece', thing);
@@ -346,6 +353,11 @@ io.on('connection', (socket) =>{
     socket.on('invalid-move', (obj) => {
         console.log('entered invalid move!');
         console.log('cid ' + obj.cp + ' sid ' + obj.sp);
+        let room = FindRoom(socket.id);
+        socket.in(room).emit('move-back', (obj));
+    });
+
+    socket.on('moved-back', (obj) => {
         let room = FindRoom(socket.id);
         socket.in(room).emit('move-back', (obj));
     });

@@ -2762,6 +2762,12 @@ function MovesOffForCheckPiece(id)
     newpiece.MovesOff();
 }
 
+function NullenemyPiece()
+{
+    enemyPiece.piece = null;
+    enemyPiece.position = null;
+}
+
 function SetListeners(elem)
 {
     let child = elem.firstElementChild;
@@ -2785,29 +2791,30 @@ function SetListeners(elem)
 
             let t = rect.top;
             let bottom = rect.top < 0 ? -1 * rect.top + rect.bottom : rect.bottom;
-            console.table(rect);
-            console.table(srect);
-            console.log("r: " + r);
-            console.log("e.pageX: " + e.pageX);
-            console.log("e.pageY: " + e.pageY);
-            console.log("e.clientX: " + e.clientX);
-            console.log("e.clientY: " + e.clientY);
-            console.log("left: " + right);
-            console.log("bottom: " + bottom);
-            console.log("win innerwidth: " + window.innerWidth);
-            console.log("win innerheight: " + window.innerHeight);
-            console.log("body.width: " + document.body.getBoundingClientRect().width);
-            console.log("body.bottom: " + document.body.getBoundingClientRect().bottom);
-            console.log("board.right: " + board.getBoundingClientRect().right);
-            console.log("board.bottom: " + board.getBoundingClientRect().bottom);
+         //   console.table(rect);
+         //   console.table(srect);
+         //   console.log("r: " + r);
+         //   console.log("e.pageX: " + e.pageX);
+         //   console.log("e.pageY: " + e.pageY);
+         //   console.log("e.clientX: " + e.clientX);
+          //  console.log("e.clientY: " + e.clientY);
+         //   console.log("left: " + right);
+         //   console.log("bottom: " + bottom);
+         //   console.log("win innerwidth: " + window.innerWidth);
+         //   console.log("win innerheight: " + window.innerHeight);
+         //   console.log("body.width: " + document.body.getBoundingClientRect().width);
+         //   console.log("body.bottom: " + document.body.getBoundingClientRect().bottom);
+         //   console.log("board.right: " + board.getBoundingClientRect().right);
+         //   console.log("board.bottom: " + board.getBoundingClientRect().bottom);
             if(e.clientX > r || e.clientX < l) return;
             if(e.clientY > bottom || e.clientY < t) return;
             let xp = e.pageX / (right); 
             let yp = (e.pageY) / (bottom);
-            console.log("xp " + xp);
-            console.log("yp " + yp);
+         //   console.log("xp " + xp);
+         //   console.log("yp " + yp);
             socket.emit('moving', ({x: xp, y: yp, ww: rect.left, wh: rect.top, item: child.children.item(0).id}));
         });
+
         child.addEventListener('dragstart', (e) => {
             if(lock)
             {
@@ -2915,11 +2922,12 @@ function SetListeners(elem)
     {
         if(lock || IsPieceOffBoard(chesspiece))
         {
+            console.error("ChessPiece is off board or lock is true!");
             return;
         }
         if(focusenter === null)
         {
-            console.log('focusenter is equal to null!!!!');
+            console.error('focusenter is equal to null!!!!');
             return;
         }
 
@@ -3152,6 +3160,7 @@ function SetListeners(elem)
         
     elem.addEventListener("mouseleave", SetSquareLeave, true);
 
+    
     elem.addEventListener("dragenter", function(e)
     {
         if(lock || IsPieceOffBoard(chesspiece))
@@ -3486,8 +3495,7 @@ socket.on('monitor-drag-in', (obj) => {
 socket.on('move-back', (obj) => {
     enemyPiece.piece.style.position = 'static'
     enemyPiece.position.appendChild(enemyPiece.piece);
-    enemyPiece.piece = null;
-    enemyPiece.position = null;
+    NullenemyPiece();
     /*
     let cp = document.getElementById(obj.cp);
     let cpparent = cp.parentElement;
@@ -3503,8 +3511,7 @@ socket.on('checkforcheck', (obj) => {
     console.error("appending to spot: " + obj.spot)
     enemyPiece.piece.style.position = 'static';
     document.getElementById(obj.spot).appendChild(enemyPiece.piece);
-    enemyPiece.piece = null;
-    enemyPiece.position = null;
+    NullenemyPiece();
     check = false;
     lock = false;
     let cp = GetMyKing();
@@ -3704,8 +3711,6 @@ socket.on('get_board_data', (message) => {
 });
 
 socket.on('queen-it', (obj) => {
-    enemyPiece.piece = null;
-    enemyPiece.position = null;
     console.log("entered queen-it::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
     console.log("queen-it obj!!!");
     console.log(obj);
@@ -3806,13 +3811,13 @@ socket.on('reconnect_fail', (message) => {
 });
 
 socket.on('currentposition', (move) => {
-    console.error("move.x: " + move.x + " move.y: " + move.y);
+ //   console.error("move.x: " + move.x + " move.y: " + move.y);
     let rect = board.getBoundingClientRect()
     let srect = Square.getBoundingClientRect();
 
     let ele = document.getElementById(move.item);
-    console.table(srect);
-    console.table(rect);
+ //   console.table(srect);
+ //   console.table(rect);
     let l = rect.left + srect.width * 2;
     let right = rect.left < 0 ? (-1 * rect.left + rect.right) + (window.innerWidth - move.winwidth) : rect.right// + (move.winwidth - window.innerWidth);
   //  if(window.scrollX + rect.left < 0) right = (-1 * (window.scrollX + rect.left)) + right + ele.getBoundingClientRect().width;
@@ -3821,30 +3826,31 @@ socket.on('currentposition', (move) => {
   //  right = right + ele.getBoundingClientRect().width * 2 + 4 + 10;
     
     let bottom = rect.top < 0 ? -1 * rect.top + rect.bottom : rect.bottom;
-    console.log("board.offseTop: " + board.offsetTop);
-    console.log("board.offsetLeft: " + board.offsetLeft);
-    console.log("win innerwidth: " + window.innerWidth);
-    console.log("win innerheight: " + window.innerHeight);
-    console.log("body.width: " + document.body.getBoundingClientRect().width);
-    console.log("body.bottom: " + document.body.getBoundingClientRect().bottom);
-    console.log("board.right: " + board.getBoundingClientRect().right);
-    console.log("board.bottom: " + board.getBoundingClientRect().bottom);
-    console.log("before enemyPiece.x: " + enemyPiece.x);
-    console.log("before enemyPiece.y: " + enemyPiece.y);
+ //   console.log("board.offseTop: " + board.offsetTop);
+ //   console.log("board.offsetLeft: " + board.offsetLeft);
+ //   console.log("win innerwidth: " + window.innerWidth);
+ //   console.log("win innerheight: " + window.innerHeight);
+ //   console.log("body.width: " + document.body.getBoundingClientRect().width);
+ //   console.log("body.bottom: " + document.body.getBoundingClientRect().bottom);
+ //   console.log("board.right: " + board.getBoundingClientRect().right);
+ //   console.log("board.bottom: " + board.getBoundingClientRect().bottom);
+ //   console.log("before enemyPiece.x: " + enemyPiece.x);
+//    console.log("before enemyPiece.y: " + enemyPiece.y);
     enemyPiece.x = ((1 - move.x) * right);
     enemyPiece.y = ((1 - move.y) * bottom); /*- ele.children.item(0).getBoundingClientRect().height) *///- 50));
-    console.log("board.offsetTop: " + board.offsetTop);
-    console.log("rect.top: " + rect.top)
+ //   console.log("board.offsetTop: " + board.offsetTop);
+ //   console.log("rect.top: " + rect.top)
     enemyPiece.y = enemyPiece.y; + (board.offsetTop);
   //  enemyPiece.y = enemyPiece.y - ((window.innerHeight - rect.height) + (window.innerHeight - rect.bottom));
-    console.log("left: " + window.scrollX + rect.left);
-    console.log("top: " + window.scrollY + rect.top);
-    console.log("right: " + right);
-    console.log("bottom: " + bottom);
-    console.log("enemyPiece.x: " + enemyPiece.x);
-    console.log("enemyPiece.y: " + enemyPiece.y);
+ //   console.log("left: " + window.scrollX + rect.left);
+//    console.log("top: " + window.scrollY + rect.top);
+ //   console.log("right: " + right);
+ //   console.log("bottom: " + bottom);
+ //   console.log("enemyPiece.x: " + enemyPiece.x);
+//    console.log("enemyPiece.y: " + enemyPiece.y);
     enemyPiece.id = move.item;
-    requestAnimationFrame(UpdatePosition);
+   // requestAnimationFrame(UpdatePosition);
+   UpdatePosition();
 })
 
 

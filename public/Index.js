@@ -2772,6 +2772,8 @@ function SetListeners(elem)
         {
             return;
         }
+        if(chesspiece.id == 'lt' && blackbottom) return;
+        if(chesspiece.id == 'dt' && !blackbottom) return;
         //    console.error(" e.clientX:" + e.clientX + " e.clientY:" + e.clientY);
         //    console.log(this);
             let rect = board.getBoundingClientRect()

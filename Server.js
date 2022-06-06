@@ -364,6 +364,7 @@ io.on('connection', (socket) =>{
 
     socket.on('disconnecting', (reason) => {
         let room = FindRoom(socket.id);
+        socket.in(room).emit('mid-disconnect', reason);
         console.log(socket.id + " is disconnecting from room: " + room);
     });
 

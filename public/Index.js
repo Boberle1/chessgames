@@ -977,13 +977,17 @@ socket.on('error', (message) => {
 });
 
 socket.on('leaveroom', (message) => {
+    lock = true;
     alert(message);
+    NullenemyPiece();
+    ClearMyMoves();
     return;
 });
 
 socket.on('enterroom', (Obj) => {
     Opponent = Obj.Name;
     alert(Obj.sentence);
+    lock = false;
     console.log("IN socket.on enterroom ");
     socket.emit('my-name-is', (Player.PlayerName));
     return;
@@ -2396,14 +2400,15 @@ function PawnToQueen(id)
     let pastid = cp.id;
     cp.id = GetNewQueenID(team);
     let image = document.createElement('img');
-    image.src = 'Chess_Pieces/sm' + team + 'queen.png';
-    image.ariaLabel = team;
     cp.appendChild(image);
     let h = (.75 * window.innerHeight) / 8;
     h = parseInt(h.toString().substr(0, 2));
-    switchpiece(cp.parentElement.parentElement, h);
+    image.src = 'Chess_Pieces/' + GetPiecesizename(h) + team + 'queen.png';
+    image.ariaLabel = team;
+    cp.appendChild(image);
     console.log("in pawn to queen right before using pastid");
     let pastpiece = GetMyPiece(pastid);
+    console.log(pastpiece);
     console.log("in pawn to queen right after using pastid");
     if(!pastpiece)
     {
@@ -2412,6 +2417,7 @@ function PawnToQueen(id)
     }
     MYpQ.push(new PawnToQueenMap(pastid, id, team));
     pastpiece.ReplaceMe(cp.id, new Queen(2));
+    console.log(pastpiece);
     console.log("returnig from Pawn to queen")
 }
 
@@ -2429,12 +2435,11 @@ function OpponentPawnToQueen(id)
     let pastid = cp.id;
     cp.id = GetNewQueenID(team);
     let image = document.createElement('img');
-    image.src = 'Chess_Pieces/sm' + team + 'queen.png';
-    image.ariaLabel = team;
-    cp.appendChild(image);
     let h = (.75 * window.innerHeight) / 8;
     h = parseInt(h.toString().substr(0, 2));
-    switchpiece(cp.parentElement.parentElement, h);
+    image.src = 'Chess_Pieces/' + GetPiecesizename(h) + team + 'queen.png';
+    image.ariaLabel = team;
+    cp.appendChild(image);
     let op = GetOpponentsPiece(pastid);
     if(!op)
     {
@@ -2680,7 +2685,7 @@ function GetMyPieceMoves(elem, theoretical, team)
 {
     elem.moves.ClearMoves();
     console.error("Pieceid in GetMyPieceMoves: " + elem.pieceid);
-    elem.moves.GetMoves(document.getElementById(elem.pieceid).parentElement.parentElement.id, team, true, theoretical);
+    elem.moves.GetMoves(document.getElementById(elem.pieceid).parentElement.parentElement.id, team, availablemoves, theoretical);
 }
 
 function GetApposingMoves(team)
@@ -3134,7 +3139,7 @@ function SetListeners(elem)
                     console.log("after change pastid: " + pastid);
                     PawnToQueen(chesspiece.children.item(0).id);
                     console.log("Right before socket.emit queenme");
-                    socket.emit('queen-me', {T: team, id: pastid, nid: chesspiece.children.item(0).id});
+                    socket.emit('queen-me', {T: team, id: pastid, nid: chesspiece.children.item(0).id, spot: focusenter.id});
                 }   
 
                 UpdateMySpot(chesspiece.id, focusenter.id);
@@ -3450,6 +3455,11 @@ let UpdatePosition = function(){
     enemyPiece.piece.style.top = enemyPiece.y + 'px';
 }
 
+socket.on('mid-disconnect', (message) => {
+    NullenemyPiece();
+    ClearMyMoves();
+});
+
 socket.on('remove-piece', (data) =>{
     console.log("Move recieved to second board!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
     let cp = document.getElementById(data);
@@ -3509,9 +3519,12 @@ socket.on('move-back', (obj) => {
 
 socket.on('checkforcheck', (obj) => {
     console.error("appending to spot: " + obj.spot)
-    enemyPiece.piece.style.position = 'static';
-    document.getElementById(obj.spot).appendChild(enemyPiece.piece);
+    if(enemyPiece){
+        enemyPiece.piece.style.position = 'static';
+        document.getElementById(obj.spot).appendChild(enemyPiece.piece);
+    }
     NullenemyPiece();
+    
     check = false;
     lock = false;
     let cp = GetMyKing();
@@ -3557,6 +3570,7 @@ socket.on('checkforcheck', (obj) => {
     //    console.log(MYpieces);
      //   console.log(OpponentsPieces);
         //check for checkmate...
+        console.log(MYpieces);
         for(let i = 0; i < MYpieces.length - 1; ++i)
         {
             if(MYpieces[i].moves.IsKing()) continue;
@@ -3721,20 +3735,10 @@ socket.on('queen-it', (obj) => {
     {
         console.error("cp is nullptr in socket.in(room).emit('queen-it)");
         return;
-    }/*
-    console.log(cp);
-    cp.removeChild(cp.children.item(0));
-    cp.classList.replace(team + 'pawn', team + 'queen');
-    cp.id = obj.nid;
-    let image = document.createElement('img');
-    image.src = 'Chess_Pieces/sm' + team + 'queen.png';
-    image.ariaLabel = team;
-    cp.appendChild(image);
-    let h = (.75 * window.innerHeight) / 8;
-    h = parseInt(h.toString().substr(0, 2));
-    switchpiece(cp.parentElement.parentElement, h);
-    console.log(document.getElementById(obj.id));
-    */
+    }
+ //   enemyPiece.piece.style.position = 'static';
+ //   document.getElementById(obj.spot).appendChild(enemyPiece);
+ //   NullenemyPiece();
     OpponentPawnToQueen(obj.id);
 });
 
@@ -3819,15 +3823,17 @@ socket.on('currentposition', (move) => {
  //   console.table(srect);
  //   console.table(rect);
     let l = rect.left + srect.width * 2;
-    let right = rect.left < 0 ? (-1 * rect.left + rect.right) + (window.innerWidth - move.winwidth) : rect.right// + (move.winwidth - window.innerWidth);
+    let right = rect.left < 0 ? (-1 * rect.left + rect.right) : rect.right// + (move.winwidth - window.innerWidth);
   //  if(window.scrollX + rect.left < 0) right = (-1 * (window.scrollX + rect.left)) + right + ele.getBoundingClientRect().width;
 
   //  right = right - ((document.body.getBoundingClientRect().width - board.getBoundingClientRect().width)/2);
   //  right = right + ele.getBoundingClientRect().width * 2 + 4 + 10;
     
     let bottom = rect.top < 0 ? -1 * rect.top + rect.bottom : rect.bottom;
- //   console.log("board.offseTop: " + board.offsetTop);
- //   console.log("board.offsetLeft: " + board.offsetLeft);
+    console.log("board.offseTop: " + board.offsetTop);
+    console.log("board.offsetLeft: " + board.offsetLeft);
+    console.log("board.rect.left: " + rect.left);
+    console.log("board.rect.top: " + rect.top);
  //   console.log("win innerwidth: " + window.innerWidth);
  //   console.log("win innerheight: " + window.innerHeight);
  //   console.log("body.width: " + document.body.getBoundingClientRect().width);
@@ -3837,7 +3843,7 @@ socket.on('currentposition', (move) => {
  //   console.log("before enemyPiece.x: " + enemyPiece.x);
 //    console.log("before enemyPiece.y: " + enemyPiece.y);
     enemyPiece.x = ((1 - move.x) * right);
-    enemyPiece.y = ((1 - move.y) * bottom); /*- ele.children.item(0).getBoundingClientRect().height) *///- 50));
+    enemyPiece.y = ((1 - move.y) * bottom)// + (document.getElementById('lk').getBoundingClientRect().height / 2); /*- ele.children.item(0).getBoundingClientRect().height) *///- 50));
  //   console.log("board.offsetTop: " + board.offsetTop);
  //   console.log("rect.top: " + rect.top)
     enemyPiece.y = enemyPiece.y; + (board.offsetTop);

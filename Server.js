@@ -238,16 +238,20 @@ function FindOppositePlayerID(sock_id)
 function DeletePlayer(sock_id)
 {
     for(let i = 0; i < roomholder.length; ++i){
+        console.log("roomholder.length: " + roomholder.length);
         if(roomholder[i].HasPlayer(sock_id))
         {
             let obj = roomholder[i].RemovePlayer(sock_id);
             if(roomholder[i].RoomEmpty())
             {
-                roomholder.splice(i, 1);
+                if(roomholder.length == 1) roomholder = [];
+                else roomholder.splice(i, 1);
             }
+            console.log("roomholder.length after deleteplayer is: " + roomholder.length);
             return obj;
         }
     };
+    console.log("roomholder.length after deleteplayer is: " + roomholder.length);
 
     return {
         room: 'null',
@@ -270,6 +274,7 @@ io.on('connection', (socket) =>{
         if(roomholder.length === 0)
         {
             roomholder.push(new roominfo(player.room, player.PlayerName, socket.id, team));
+            console.log("roomholder after first pushback!" + roomholder.length);
         //    console.log(roomholder);
         }
         else
@@ -277,6 +282,7 @@ io.on('connection', (socket) =>{
             let exist = false;
             for(let index = 0; index < roomholder.length; ++index)
             {
+                console.log("roomholder at beginning of for loop: " + roomholder.length);
                 if(roomholder[index].room === player.room)
                 {
                     p = roomholder[index].GetPlayerStatusTeam();
@@ -294,7 +300,8 @@ io.on('connection', (socket) =>{
                 }
             }
 
-            roomholder.push(new roominfo(player.room, player.PlayerName, socket.id, team));
+           if(exist) roomholder.push(new roominfo(player.room, player.PlayerName, socket.id, team));
+           console.log("roomholder after forloop: " + roomholder.length);
         }
 
         room = player.room;

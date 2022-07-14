@@ -6,7 +6,7 @@ const app = express();
 const server = require('http').Server(app)
 const io = require('socket.io')(server, {
     cors: {
-       origin:[deploy]
+       origin:[local]
     },
 })
 var public = path.join(__dirname, 'public');
@@ -35,21 +35,20 @@ class playerinfo{
     {
         this.active = false;
     }
+
+    IsPlayer(sock_id)
+    {
+        if(this.socketid == sock_id) return true;
+
+        return false;
+    }
 }
 
 class roominfo{
     constructor(r, pname, sockid, t)
     {
         this.room = r;
-        this.roomsize++;
-        if(!this.player1.active)
-        {
-            this.player1.New(pname, sockid, t);
-        }
-        else
-        {
-            this.player2.New(pname, sockid, t);
-        }
+        this.player1.New(pname, sockid, t);
     }
 
     room = '';
@@ -69,49 +68,42 @@ class roominfo{
 
     AddPlayer(pname, sock_id)
     {
-        if(this.roomsize === 2)
-        {
-            console.log('socket cannot connect, room is full!!!');
-            return false;
-        }
         if(!this.player1.active)
         {
-            this.roomsize++;
+            console.log("Adding to player1 in Addplayer!");
             this.player1.New(pname, sock_id, 'white');
             return true;
         }
+
         if(!this.player2.active)
         {
-            this.roomsize++;
+            console.log("Adding to player2 in Addplayer!");
             this.player2.New(pname, sock_id, 'black');
             return true;
         }
-        console.log('room is full but player is inactive!');
+
+        console.log('socket cannot connect, room is full!!!');
         return false;
     }
 
     RemovePlayer(sock_id)
     {
-        if(this.player2.socketid === sock_id)
-        {
-            console.log("removed player2 in RemovePlayer");
-            this.roomsize--;
-            console.log("roomsize is: " + this.roomsize);
-            this.player2.erase();
-            return {
-                room: this.room,
-                name: this.player2.playername
-            }
-        }
-        if(this.player1.socketid === sock_id)
+        if(this.player1.IsPlayer(sock_id))
         {
             console.log("removed player1 in RemovePlayer");
-            this.roomsize--;
-            console.log("roomsize is: " + this.roomsize);
-            this.player1.erase();
+            this.player1.active = false;
             return {
                 room: this.room,
-                name: this.player1.playername 
+                name: this.player1.playername
+            }
+        }
+        if(this.player2.IsPlayer(sock_id))
+        {
+            console.log("removed player2 in RemovePlayer");
+            this.player2.active = false;
+            return {
+                room: this.room,
+                name: this.player2.playername 
             }
         }
         console.log('sock_id did not match any players in RemovePlayer!!');
@@ -135,18 +127,21 @@ class roominfo{
 
     GetPlayerStatusTeam()
     {
-        if(this.player1.active)
+        if(this.player1.active == true)
         {
-            if(this.player1.team == 'black') return {team: 'white', id: this.player1.socketid};
-            else return {team: 'black', id: this.player1.socketid};
+            console.log("returning playerstatus on player1!!!");
+            console.log(this.player1);
+            return {team: 'black', id: this.player1.socketid};
         }
 
-        if(this.player2.active)
+        if(this.player2.active == true)
         {
-            if(this.player2.team == 'black') return {team: 'white', id: this.player2.socketid};
-            else return {team: 'black', id: this.player2.socketid};
+            console.log("returning playerstatus on player2!!!");
+            console.log(this.player2);
+            return {team: 'white', id: this.player2.socketid};
         }
-        return {team: 'white', id: 'no_id'};
+
+        return {team: 'white', id: notfound};
     }
 
     GetOppositeId(sock_id)
@@ -160,6 +155,13 @@ class roominfo{
         console.log("Could not find player id in GetOppositeId in room holder!");
         return '0';
     }
+
+    IsRoom(roomname)
+    {
+        if(roomname == this.room) return true;
+
+        return false;
+    }
 }
 
 let roomholder = [];
@@ -169,6 +171,27 @@ app.get('/', (req, res) =>{
     res.sendFile(path.join(public, '/board.html'));
     console.log("Sent html file!");
 });
+
+function GetRoom(room)
+{
+    for(let i = 0; i < roomholder.length; ++i) if(roomholder[i].IsRoom(room)) return roomholder[i];
+    
+    return null;
+}
+
+function NewPlayer(player, id, team)
+{
+    let room = GetRoom(player.room);
+    if(!room) 
+    {
+        roomholder.push(new roominfo(player.room, player.PlayerName, id, team));
+        return roomholder[roomholder.length-1];
+    }
+
+    if(room.AddPlayer(player.PLayerName, id)) return room;
+
+    return null;
+}
 
 function FindRoomIndex(sock_id)
 {
@@ -247,24 +270,31 @@ io.on('connection', (socket) =>{
         if(roomholder.length === 0)
         {
             roomholder.push(new roominfo(player.room, player.PlayerName, socket.id, team));
-            console.log(roomholder);
+        //    console.log(roomholder);
         }
         else
         {
+            let exist = false;
             for(let index = 0; index < roomholder.length; ++index)
             {
                 if(roomholder[index].room === player.room)
                 {
                     p = roomholder[index].GetPlayerStatusTeam();
+                    console.log("player status!");
+                    console.log(p);
                     if(!roomholder[index].AddPlayer(player.PlayerName, socket.id, p.team))
                     {
+                        exist = true;
                         io.to(socket.id).emit("reconnect_fail", "Cannot connect due to room being full but most likely because something is wrong");
                         console.log("socket cannot connect, room is full!!!");
                         return;
                     }
-                    console.log(roomholder);
+                    break;
+                //    console.log(roomholder);
                 }
             }
+
+            roomholder.push(new roominfo(player.room, player.PlayerName, socket.id, team));
         }
 
         room = player.room;
@@ -364,13 +394,15 @@ io.on('connection', (socket) =>{
 
     socket.on('disconnecting', (reason) => {
         let room = FindRoom(socket.id);
+        socket.emit("mid-disconnecting", reason);
         socket.in(room).emit('mid-disconnect', reason);
         console.log(socket.id + " is disconnecting from room: " + room);
     });
 
     socket.on('disconnect', (reason) =>{
         let answer = DeletePlayer(socket.id);
-        socket.in(answer.room).emit('leaveroom', answer.name + " disconnected because; " + reason);
+        let obj = {message: answer.name + " disconnected because; ", r: reason}
+        socket.in(answer.room).emit('leaveroom', obj);
     });
 
     socket.on('state_is', (bool) => {

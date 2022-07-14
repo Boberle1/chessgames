@@ -285,12 +285,12 @@ io.on('connection', (socket) =>{
                 console.log("roomholder at beginning of for loop: " + roomholder.length);
                 if(roomholder[index].room === player.room)
                 {
+                    exist = true;
                     p = roomholder[index].GetPlayerStatusTeam();
                     console.log("player status!");
                     console.log(p);
                     if(!roomholder[index].AddPlayer(player.PlayerName, socket.id, p.team))
                     {
-                        exist = true;
                         io.to(socket.id).emit("reconnect_fail", "Cannot connect due to room being full but most likely because something is wrong");
                         console.log("socket cannot connect, room is full!!!");
                         return;
@@ -300,7 +300,7 @@ io.on('connection', (socket) =>{
                 }
             }
 
-           if(exist) roomholder.push(new roominfo(player.room, player.PlayerName, socket.id, team));
+           if(!exist) roomholder.push(new roominfo(player.room, player.PlayerName, socket.id, team));
            console.log("roomholder after forloop: " + roomholder.length);
         }
 

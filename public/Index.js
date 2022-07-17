@@ -42,10 +42,10 @@ let enemypiece = null;
 let draginprogress = false;
 let pingtimeout = false;
 let waslockon = false;
+let movecounter = 0;
 
 let enemyPiece = {
     piece: null,
-    position: null,
     id: '',
     x: 0, 
     y: 0,
@@ -887,9 +887,6 @@ socket.on('error', (message) => {
 
 socket.on('leaveroom', (message) => {
     let m = message.message + message.r;
-    if(lock) waslockon = true;
-    lock = true;
-    HandleOtherplayerDisconnecting(message.r);
     alert(m);
 });
 
@@ -897,7 +894,6 @@ socket.on('enterroom', (Obj) => {
     Opponent = Obj.Name;
     alert(Obj.sentence);
     console.log("IN socket.on enterroom ");
-    waslockon ? lock = true : lock = false;
     socket.emit('my-name-is', (Player.PlayerName));
     return;
 });
@@ -2472,17 +2468,31 @@ function NullenemyPiece()
 {
     enemyPiece.piece = null;
     enemyPiece.position = null;
+    enemyPiece.home = null;
 }
 
 function HandleOtherplayerDisconnecting(message)
 {
     console.error("message is::::" + message);
-    if(message == "transport close") pingtimeout = false;
-    else pingtimeout = true;
-    if(enemyPiece.position && enemyPiece.piece)
+    if(message == "transport close") 
     {
+        pingtimeout = false;
+        return;
+    }
+    else pingtimeout = true;
+    if(enemyPiece.home && enemyPiece.piece)
+    {
+        console.log("enemypiece id: " + enemyPiece.id);
+      //  let child = document.getElementById(enemyPiece.id).parentElement;
+      enemyPiece.piece.style.zIndex = 1;
         enemyPiece.piece.style.position = 'static';
-        position.appendChild(enemyPiece);
+        console.log("After position set to static: " + enemyPiece.piece.style.position);
+        console.log(enemyPiece.piece);
+        document.getElementById(enemyPiece.home.id).appendChild(enemyPiece.piece);
+     //   console.log(child.id);
+        enemyPiece.piece.style.position = 'static';
+        console.log(enemyPiece.home);
+        console.log(enemyPiece.piece);
     }
     NullenemyPiece();
     ClearMyMoves();
@@ -2500,6 +2510,7 @@ function SetListeners(elem)
                 return;
             }
             draginprogress = true;
+            ++movecounter;
             if(chesspiece.id == 'lt' && blackbottom) return;
             if(chesspiece.id == 'dt' && !blackbottom) return;
             let rect = board.getBoundingClientRect()
@@ -2515,7 +2526,8 @@ function SetListeners(elem)
             if(e.clientY > bottom || e.clientY < t) return;
             let xp = e.pageX / (right); 
             let yp = (e.pageY) / (bottom);
-            socket.emit('moving', ({x: xp, y: yp, ww: rect.left, wh: rect.top, item: child.children.item(0).id}));
+            socket.emit('moving', ({x: xp, y: yp, ww: rect.left, wh: rect.top, item: child.children.item(0).id, spot:chesspiecehome.id}));
+            if(movecounter == 50) socket.emit('TestDisconnect', 'ping timeout');
         });
 
         child.addEventListener('dragstart', (e) => {
@@ -3086,29 +3098,42 @@ function ClearMyCheckMoves()
 
 let UpdatePosition = function(){
     if(!enemyPiece.piece) enemyPiece.piece = document.getElementById(enemyPiece.id).parentElement;
-    if(!enemyPiece.position)
+    if(!enemyPiece.home)
     {
      //   document.getElementById('s').
-        enemyPiece.position = enemyPiece.piece.parentElement;
-        enemyPiece.position.removeChild(enemyPiece.piece);
+        enemyPiece.home = enemyPiece.piece.parentElement;
+        enemyPiece.home.removeChild(enemyPiece.piece);
         enemyPiece.piece.style.zIndex = 10;
         board.appendChild(enemyPiece.piece);
-     //   document.body.appendChild(enemyPiece.piece);
+     
     }
     enemyPiece.piece.style.position = 'absolute';
     enemyPiece.piece.style.left = enemyPiece.x  + 'px'
     enemyPiece.piece.style.top = enemyPiece.y + 'px';
 }
 
-socket.on('mid-disconnect', (message) => {
-    HandleOtherplayerDisconnecting(message);
-    NullenemyPiece();
+socket.on('test-disconnect', (reason) => {
+    waslockon = lock;
+    lock = true;
+    HandleOtherplayerDisconnecting(reason);
+});
+
+socket.on('test-disconnecting', (reason) => {
+    waslockon = lock;
+    lock = true;
     ClearMyMoves();
 });
 
-socket.on("mid-disconnecting", (reason) => {
+socket.on('mid-disconnect', (message) => {
+    waslockon = lock;
     lock = true;
-    HandleOtherplayerDisconnecting(reason);
+    HandleOtherplayerDisconnecting(message);
+});
+
+socket.on("mid-disconnecting", (reason) => {
+    waslockon = lock;
+    lock = true;
+    ClearMyMoves();
 });
 
 socket.on('remove-piece', (data) =>{
@@ -3171,8 +3196,12 @@ socket.on('move-back', (obj) => {
 socket.on('checkforcheck', (obj) => {
     console.error("appending to spot: " + obj.spot)
     if(enemyPiece){
+        console.log("Before applying static to position: " + enemyPiece.piece);
+        console.log(enemyPiece.piece);
         enemyPiece.piece.style.position = 'static';
         document.getElementById(obj.spot).appendChild(enemyPiece.piece);
+        console.log("After applying static to position: " + enemyPiece.piece);
+        console.log(enemyPiece.piece);
     }
     NullenemyPiece();
     
@@ -3472,8 +3501,6 @@ socket.on('currentposition', (move) => {
  //   console.error("move.x: " + move.x + " move.y: " + move.y);
     let rect = board.getBoundingClientRect()
     let srect = Square.getBoundingClientRect();
-
-    let ele = document.getElementById(move.item);
  //   console.table(srect);
  //   console.table(rect);
     let l = rect.left + srect.width * 2;

@@ -399,9 +399,16 @@ io.on('connection', (socket) =>{
         socket.in(room).emit('move-back', (obj));
     });
 
+    socket.on('TestDisconnect', (reason) => {
+        let room = FindRoom(socket.id);
+        io.to(socket.id).emit('test-disconnecting', (reason));
+        socket.in(room).emit('test-disconnect', reason);
+     //   socket.in(room).emit('get_board_data', ('please'));
+    });
+
     socket.on('disconnecting', (reason) => {
         let room = FindRoom(socket.id);
-        socket.emit("mid-disconnecting", reason);
+        io.to(socket.id).emit('mid-disconnecting', (reason));
         socket.in(room).emit('mid-disconnect', reason);
         console.log(socket.id + " is disconnecting from room: " + room);
     });

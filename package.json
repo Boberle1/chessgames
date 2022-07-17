@@ -9,6 +9,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack --config webpack.config.js",
+    "build1": "Index.js",
     "start": "node Server.js",
     "postinstall": "webpack"
   },

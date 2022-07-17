@@ -2527,7 +2527,7 @@ function SetListeners(elem)
             let xp = e.pageX / (right); 
             let yp = (e.pageY) / (bottom);
             socket.emit('moving', ({x: xp, y: yp, ww: rect.left, wh: rect.top, item: child.children.item(0).id, spot:chesspiecehome.id}));
-            if(movecounter == 50) socket.emit('TestDisconnect', 'ping timeout');
+         //   if(movecounter == 50) socket.emit('TestDisconnect', 'ping timeout');
         });
 
         child.addEventListener('dragstart', (e) => {

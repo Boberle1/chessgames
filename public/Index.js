@@ -891,6 +891,7 @@ socket.on('leaveroom', (message) => {
 });
 
 socket.on('enterroom', (Obj) => {
+    lock = waslockon ? true : false;
     Opponent = Obj.Name;
     alert(Obj.sentence);
     console.log("IN socket.on enterroom ");

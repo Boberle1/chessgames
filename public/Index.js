@@ -891,7 +891,6 @@ socket.on('leaveroom', (message) => {
 });
 
 socket.on('enterroom', (Obj) => {
-    lock = waslockon ? true : false;
     Opponent = Obj.Name;
     alert(Obj.sentence);
     console.log("IN socket.on enterroom ");
@@ -2528,7 +2527,7 @@ function SetListeners(elem)
             let xp = e.pageX / (right); 
             let yp = (e.pageY) / (bottom);
             socket.emit('moving', ({x: xp, y: yp, ww: rect.left, wh: rect.top, item: child.children.item(0).id, spot:chesspiecehome.id}));
-         //   if(movecounter == 50) socket.emit('TestDisconnect', 'ping timeout');
+       //     if(movecounter == 50) socket.emit('TestDisconnect', 'ping timeout');
         });
 
         child.addEventListener('dragstart', (e) => {
@@ -3181,7 +3180,7 @@ socket.on('monitor-drag-in', (obj) => {
 
 socket.on('move-back', (obj) => {
     enemyPiece.piece.style.position = 'static'
-    enemyPiece.position.appendChild(enemyPiece.piece);
+    enemyPiece.home.appendChild(enemyPiece.piece);
     NullenemyPiece();
     /*
     let cp = document.getElementById(obj.cp);

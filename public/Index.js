@@ -2509,11 +2509,12 @@ function SetListeners(elem)
             {
                 return;
             }
-            draginprogress = true;
+
             ++movecounter;
             if(chesspiece.id == 'lt' && blackbottom) return;
             if(chesspiece.id == 'dt' && !blackbottom) return;
-            let rect = board.getBoundingClientRect()
+            
+            let rect = board.getBoundingClientRect();
             let srect = Square.getBoundingClientRect();
 
             let l = rect.left < 0 ? -1 * rect.left + srect.width * 2 : rect.left + srect.width * 2;
@@ -2524,10 +2525,12 @@ function SetListeners(elem)
             let bottom = rect.top < 0 ? -1 * rect.top + rect.bottom : rect.bottom;
             if(e.clientX > r || e.clientX < l) return;
             if(e.clientY > bottom || e.clientY < t) return;
+
+            draginprogress = true;
+
             let xp = e.pageX / (right); 
             let yp = (e.pageY) / (bottom);
             socket.emit('moving', ({x: xp, y: yp, ww: rect.left, wh: rect.top, item: child.children.item(0).id, spot:chesspiecehome.id}));
-       //     if(movecounter == 50) socket.emit('TestDisconnect', 'ping timeout');
         });
 
         child.addEventListener('dragstart', (e) => {
